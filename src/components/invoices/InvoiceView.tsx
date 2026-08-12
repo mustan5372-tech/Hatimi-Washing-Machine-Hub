@@ -220,7 +220,7 @@ export const InvoiceView: React.FC<InvoiceViewProps> = ({
               <div className="mt-3 text-xs text-slate-600 space-y-0.5">
                 <p className="font-semibold text-slate-900">{settings.address}</p>
                 <p>Phone: <span className="font-mono">{settings.phone}</span> • WhatsApp: <span className="font-mono">{settings.whatsapp}</span></p>
-                <p>Email: {settings.email} {settings.gstNumber && `• GSTIN: ${settings.gstNumber}`}</p>
+                <p>Email: {settings.email || 'mustan5372@gmail.com'}</p>
               </div>
             </div>
 

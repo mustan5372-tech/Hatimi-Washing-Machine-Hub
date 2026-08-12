@@ -87,8 +87,15 @@ const saveData = <T>(key: string, data: T) => {
 // --- Settings ---
 export const getSettings = (): BusinessSettings => {
   const loaded = loadData<BusinessSettings>(SETTINGS_KEY, INITIAL_SETTINGS);
-  const settings = !loaded.firebaseApiKey ? { ...INITIAL_SETTINGS, ...loaded } : loaded;
+  let settings = !loaded.firebaseApiKey ? { ...INITIAL_SETTINGS, ...loaded } : loaded;
   
+  if (settings.email === 'contact@hatimiwmh.com' || !settings.email) {
+    settings = { ...settings, email: 'mustan5372@gmail.com' };
+  }
+  if (settings.gstNumber) {
+    settings = { ...settings, gstNumber: '' };
+  }
+
   if (settings.firebaseApiKey && settings.firebaseProjectId) {
     initFirebase({
       apiKey: settings.firebaseApiKey,

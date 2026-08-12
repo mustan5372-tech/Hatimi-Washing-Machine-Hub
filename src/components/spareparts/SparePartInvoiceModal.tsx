@@ -122,10 +122,7 @@ export const SparePartInvoiceModal: React.FC<SparePartInvoiceModalProps> = ({
                 {settings.shopName}
               </h1>
               <p className="text-xs text-slate-600 font-medium">{settings.address}</p>
-              <p className="text-xs text-slate-600">Phone / WhatsApp: <span className="font-bold text-slate-900">{settings.phone}</span></p>
-              {settings.gstNumber && (
-                <p className="text-[11px] text-slate-500 font-mono">GSTIN: {settings.gstNumber}</p>
-              )}
+              <p className="text-xs text-slate-600">Phone / WhatsApp: <span className="font-bold text-slate-900">{settings.phone}</span> • Email: <span className="font-bold text-slate-900">{settings.email || 'mustan5372@gmail.com'}</span></p>
             </div>
             <div className="text-right">
               <span className="inline-block px-3 py-1 bg-amber-100 text-amber-900 font-black text-xs uppercase rounded-md tracking-wider border border-amber-300">
