@@ -105,7 +105,29 @@ export const updateSettings = (settings: Partial<BusinessSettings>): BusinessSet
 
 // --- Users & Auth ---
 export const getUsers = (): UserProfile[] => {
-  return loadData<UserProfile[]>(USERS_KEY, INITIAL_USERS);
+  const cached = loadData<UserProfile[]>(USERS_KEY, INITIAL_USERS);
+  
+  // Ensure all seed accounts always exist (handles stale browser cache)
+  let merged = [...cached];
+  let changed = false;
+  for (const seedUser of INITIAL_USERS) {
+    const exists = merged.some(u => u.email.toLowerCase() === seedUser.email.toLowerCase());
+    if (!exists) {
+      merged.push(seedUser);
+      changed = true;
+    } else {
+      // Ensure existing seed accounts have PIN if missing
+      const idx = merged.findIndex(u => u.email.toLowerCase() === seedUser.email.toLowerCase());
+      if (idx >= 0 && !merged[idx].pin && seedUser.pin) {
+        merged[idx].pin = seedUser.pin;
+        changed = true;
+      }
+    }
+  }
+  if (changed) {
+    saveData(USERS_KEY, merged);
+  }
+  return merged;
 };
 
 export const saveUser = (user: UserProfile) => {
