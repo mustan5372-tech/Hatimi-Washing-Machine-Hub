@@ -35,8 +35,20 @@ import { CustomerList } from './components/customers/CustomerList';
 import { ReportsOverview } from './components/reports/ReportsOverview';
 import { QRScannerModal } from './components/common/QRScannerModal';
 
+import { StaffLoginModal } from './components/auth/StaffLoginModal';
+import { PublicCustomerPortal } from './components/public/PublicCustomerPortal';
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => getCurrentUser());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const savedAuth = localStorage.getItem('hwmh_is_authenticated');
+    return savedAuth === 'true';
+  });
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [urlInvoiceNumber, setUrlInvoiceNumber] = useState<string | null>(() => {
+    const hash = window.location.hash;
+    return hash.includes('#invoice=') ? hash.split('#invoice=')[1] : null;
+  });
 
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [searchTerm, setSearchTerm] = useState('');
@@ -138,8 +150,36 @@ export default function App() {
     }
   };
 
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    localStorage.setItem('hwmh_is_authenticated', 'false');
+  };
+
   const stats = getDashboardStats();
   const selectedMachine = inventory.find(m => m.stockId === selectedMachineStockId) || null;
+
+  if (!isAuthenticated) {
+    return (
+      <>
+        <PublicCustomerPortal
+          settings={getSettings()}
+          sales={sales}
+          activeInvoiceNumber={urlInvoiceNumber}
+          onOpenLoginModal={() => setIsLoginModalOpen(true)}
+          onClearInvoiceQuery={() => setUrlInvoiceNumber(null)}
+        />
+        <StaffLoginModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          onLoginSuccess={(user) => {
+            setCurrentUser(user);
+            setIsAuthenticated(true);
+            localStorage.setItem('hwmh_is_authenticated', 'true');
+          }}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 flex flex-col antialiased selection:bg-teal-500 selection:text-white transition-colors duration-200">
@@ -198,6 +238,7 @@ export default function App() {
             setSellModalStockId(undefined);
             setIsSaleModalOpen(true);
           }}
+          onLogout={handleLogout}
           stats={{
             totalStock: inventory.length,
             availableStock: inventory.filter(m => m.status === 'Available').length,
