@@ -53,6 +53,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
     name: '',
     email: '',
     phone: '',
+    pin: '',
     role: 'staff' as 'admin' | 'staff'
   });
 
@@ -116,18 +117,20 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       return;
     }
 
+    const defaultPin = newAccount.role === 'admin' ? '515253' : '012345';
     const newUser: UserProfile = {
       id: `user-${Date.now()}`,
       name: newAccount.name.trim(),
       email: emailClean,
       phone: newAccount.phone.trim() || '+91 98000 00000',
       role: newAccount.role,
+      pin: newAccount.pin.trim() || defaultPin,
       active: true
     };
 
     saveUser(newUser);
     setUsers(getUsers());
-    setNewAccount({ name: '', email: '', phone: '', role: 'staff' });
+    setNewAccount({ name: '', email: '', phone: '', pin: '', role: 'staff' });
     setIsAddAccountOpen(false);
     showNotification(`New authorized ${newAccount.role} account created: ${newUser.name}`);
   };
@@ -440,6 +443,19 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                       placeholder="+91 98200 00000"
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Login PIN (6 digits)</label>
+                    <input
+                      type="password"
+                      value={newAccount.pin}
+                      onChange={(e) => setNewAccount({ ...newAccount, pin: e.target.value })}
+                      placeholder="Leave blank for default PIN"
+                      maxLength={10}
+                      className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none font-mono"
+                    />
+                    <p className="text-[10px] text-slate-400 mt-0.5">Default: Admin=515253, Staff=012345</p>
                   </div>
 
                   <div>

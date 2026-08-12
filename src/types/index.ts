@@ -8,6 +8,7 @@ export interface UserProfile {
   phone?: string;
   active?: boolean;
   avatar?: string;
+  pin?: string;
 }
 
 export type MachineStatus = 'Available' | 'Reserved' | 'Sold' | 'Under Repair' | 'Pending Inspection' | 'Returned';

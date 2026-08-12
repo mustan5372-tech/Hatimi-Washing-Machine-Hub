@@ -22,6 +22,12 @@ import {
   INITIAL_USERS
 } from './seedData';
 import { initFirebase } from './firebase';
+import {
+  syncSettingsToFirestore,
+  syncDocToFirestore,
+  syncCollectionToFirestore,
+  deleteDocFromFirestore
+} from './firestoreSync';
 
 const SETTINGS_KEY = 'hwmh_settings';
 const INVENTORY_KEY = 'hwmh_inventory';
@@ -92,6 +98,8 @@ export const updateSettings = (settings: Partial<BusinessSettings>): BusinessSet
   const current = getSettings();
   const updated = { ...current, ...settings };
   saveData(SETTINGS_KEY, updated);
+  // Firestore sync
+  syncSettingsToFirestore(updated);
   return updated;
 };
 
@@ -109,11 +117,15 @@ export const saveUser = (user: UserProfile) => {
     users.push(user);
   }
   saveData(USERS_KEY, users);
+  // Firestore sync
+  syncDocToFirestore('users', user.id, user);
 };
 
 export const deleteUser = (id: string) => {
   const users = getUsers().filter(u => u.id !== id);
   saveData(USERS_KEY, users);
+  // Firestore sync
+  deleteDocFromFirestore('users', id);
 };
 
 export const getCurrentUser = (): UserProfile => {
@@ -214,11 +226,18 @@ export const saveMachine = (machine: InventoryMachine) => {
     inventory.unshift({ ...machine, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
   }
   saveData(INVENTORY_KEY, inventory);
+  // Firestore sync
+  syncDocToFirestore('inventory', machine.id || machine.stockId, machine);
 };
 
 export const deleteMachine = (id: string) => {
+  const machine = getInventory().find(m => m.id === id || m.stockId === id);
   const inventory = getInventory().filter(m => m.id !== id && m.stockId !== id);
   saveData(INVENTORY_KEY, inventory);
+  // Firestore sync
+  if (machine) {
+    deleteDocFromFirestore('inventory', machine.id || machine.stockId);
+  }
 };
 
 // --- Expenses ---
@@ -235,6 +254,8 @@ export const addMachineExpense = (expense: Omit<MachineExpense, 'id' | 'createdA
   };
   expenses.unshift(newExp);
   saveData(EXPENSES_KEY, expenses);
+  // Firestore sync
+  syncDocToFirestore('expenses', newExp.id, newExp);
 
   // Update Inventory machine costs
   const inventory = getInventory();
@@ -253,6 +274,8 @@ export const addMachineExpense = (expense: Omit<MachineExpense, 'id' | 'createdA
     m.totalCost = m.purchasePrice + m.repairExpenses + m.cleaningExpenses + m.transportExpenses + m.otherExpenses;
     m.updatedAt = new Date().toISOString();
     saveData(INVENTORY_KEY, inventory);
+    // Firestore sync the updated machine
+    syncDocToFirestore('inventory', m.id || m.stockId, m);
   }
 };
 
@@ -273,6 +296,8 @@ export const addPurchaseRecord = (purchase: Omit<PurchaseRecord, 'id' | 'stockId
   };
   purchases.unshift(newPurchase);
   saveData(PURCHASES_KEY, purchases);
+  // Firestore sync
+  syncDocToFirestore('purchases', newPurchase.id, newPurchase);
 
   // Auto create corresponding inventory item
   const newMachine: InventoryMachine = {
@@ -323,6 +348,8 @@ export const saveCustomer = (customer: Omit<Customer, 'id' | 'customerId' | 'cre
     const updated = { ...customers[idx], ...customer };
     customers[idx] = updated;
     saveData(CUSTOMERS_KEY, customers);
+    // Firestore sync
+    syncDocToFirestore('customers', updated.id, updated);
     return updated;
   } else {
     const newCust: Customer = {
@@ -335,6 +362,8 @@ export const saveCustomer = (customer: Omit<Customer, 'id' | 'customerId' | 'cre
     };
     customers.unshift(newCust);
     saveData(CUSTOMERS_KEY, customers);
+    // Firestore sync
+    syncDocToFirestore('customers', newCust.id, newCust);
     return newCust;
   }
 };
@@ -447,6 +476,8 @@ export const createSaleTransaction = (saleData: {
   const sales = getSales();
   sales.unshift(newSale);
   saveData(SALES_KEY, sales);
+  // Firestore sync
+  syncDocToFirestore('sales', newSale.id, newSale);
 
   // Update machine status to Sold
   machine.status = 'Sold';
@@ -484,6 +515,8 @@ export const recordSalePayment = (invoiceNumber: string, amount: number, payment
 
   sales[idx] = sale;
   saveData(SALES_KEY, sales);
+  // Firestore sync
+  syncDocToFirestore('sales', sale.id, sale);
 
   // Update Customer pending amount
   const customers = getCustomers();
@@ -491,6 +524,8 @@ export const recordSalePayment = (invoiceNumber: string, amount: number, payment
   if (cIdx >= 0) {
     customers[cIdx].pendingAmount = Math.max(0, customers[cIdx].pendingAmount - amount);
     saveData(CUSTOMERS_KEY, customers);
+    // Firestore sync
+    syncDocToFirestore('customers', customers[cIdx].id, customers[cIdx]);
   }
 
   return sale;
@@ -626,4 +661,13 @@ export const resetStoreToSeedData = () => {
   localStorage.setItem(USERS_KEY, JSON.stringify(INITIAL_USERS));
   localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(INITIAL_USERS[0]));
   notifyListeners();
+
+  // Firestore sync all collections
+  syncSettingsToFirestore(INITIAL_SETTINGS);
+  syncCollectionToFirestore('inventory', INITIAL_INVENTORY);
+  syncCollectionToFirestore('purchases', INITIAL_PURCHASES);
+  syncCollectionToFirestore('customers', INITIAL_CUSTOMERS);
+  syncCollectionToFirestore('sales', INITIAL_SALES);
+  syncCollectionToFirestore('expenses', INITIAL_EXPENSES);
+  syncCollectionToFirestore('users', INITIAL_USERS);
 };

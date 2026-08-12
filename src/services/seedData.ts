@@ -27,7 +27,17 @@ export const INITIAL_USERS: UserProfile[] = [
     email: "admin@hatimiwmh.com",
     role: "admin",
     phone: "+91 98765 43210",
-    active: true
+    active: true,
+    pin: "515253"
+  },
+  {
+    id: "user-mustan",
+    name: "Mustansir Admin",
+    email: "mustan5372@gmail.com",
+    role: "admin",
+    phone: "+91 98765 43210",
+    active: true,
+    pin: "515253"
   },
   {
     id: "user-staff",
@@ -35,7 +45,8 @@ export const INITIAL_USERS: UserProfile[] = [
     email: "staff@hatimiwmh.com",
     role: "staff",
     phone: "+91 98765 12345",
-    active: true
+    active: true,
+    pin: "012345"
   }
 ];
 

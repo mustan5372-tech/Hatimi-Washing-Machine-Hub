@@ -38,6 +38,7 @@ import { QRScannerModal } from './components/common/QRScannerModal';
 import { StaffLoginModal } from './components/auth/StaffLoginModal';
 import { PublicCustomerPortal } from './components/public/PublicCustomerPortal';
 import { SettingsView } from './components/settings/SettingsView';
+import { initFirestoreSync, onFirestoreSync } from './services/firestoreSync';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => getCurrentUser());
@@ -74,7 +75,23 @@ export default function App() {
     setSales(getSales());
     setExpenses(getExpenses());
     setCustomers(getCustomers());
+    setBusinessSettings(getSettings());
   };
+
+  // Initialize Firestore real-time sync on mount
+  useEffect(() => {
+    // Register cross-device sync callback: when Firestore pushes data, refresh UI
+    onFirestoreSync(() => {
+      refreshData();
+    });
+
+    // Initialize Firestore sync (upload local data if needed, start listeners)
+    initFirestoreSync().then((connected) => {
+      if (connected) {
+        console.log('[App] Firestore real-time sync connected successfully.');
+      }
+    });
+  }, []);
 
   // Modals state
   const [isAddMachineOpen, setIsAddMachineOpen] = useState(false);
