@@ -28,7 +28,9 @@ const COLLECTIONS = {
   customers: 'customers',
   sales: 'sales',
   expenses: 'expenses',
-  users: 'users'
+  users: 'users',
+  spareParts: 'spareParts',
+  sparePartSales: 'sparePartSales'
 } as const;
 
 // localStorage keys (must match store.ts)
@@ -39,7 +41,9 @@ const LS_KEYS = {
   customers: 'hwmh_customers',
   sales: 'hwmh_sales',
   expenses: 'hwmh_expenses',
-  users: 'hwmh_users'
+  users: 'hwmh_users',
+  spareParts: 'hwmh_spare_parts',
+  sparePartSales: 'hwmh_spare_part_sales'
 } as const;
 
 type CollectionName = keyof typeof COLLECTIONS;
@@ -248,6 +252,8 @@ export const startAllListeners = () => {
   startCollectionListener('sales');
   startCollectionListener('expenses');
   startCollectionListener('users');
+  startCollectionListener('spareParts');
+  startCollectionListener('sparePartSales');
 };
 
 /**
@@ -266,7 +272,7 @@ export const uploadLocalDataToFirestore = async () => {
   const db = getFirestore();
   if (!db) return;
 
-  const collectionsToSync: CollectionName[] = ['inventory', 'purchases', 'customers', 'sales', 'expenses', 'users'];
+  const collectionsToSync: CollectionName[] = ['inventory', 'purchases', 'customers', 'sales', 'expenses', 'users', 'spareParts', 'sparePartSales'];
 
   for (const colName of collectionsToSync) {
     try {

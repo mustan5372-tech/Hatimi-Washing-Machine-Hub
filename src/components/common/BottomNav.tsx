@@ -1,26 +1,29 @@
 import React from 'react';
-import { LayoutDashboard, Package, PlusCircle, Receipt, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, Package, Wrench, PlusCircle, Receipt, BarChart3, LogOut } from 'lucide-react';
 
 interface BottomNavProps {
   currentTab: string;
   onSelectTab: (tab: string) => void;
   onOpenQuickBuy: () => void;
   onOpenQuickSell: () => void;
+  onLogout?: () => void;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   currentTab,
   onSelectTab,
   onOpenQuickBuy,
-  onOpenQuickSell
+  onOpenQuickSell,
+  onLogout
 }) => {
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, action: () => onSelectTab('dashboard') },
+    { id: 'dashboard', label: 'Home', icon: LayoutDashboard, action: () => onSelectTab('dashboard') },
     { id: 'inventory', label: 'Stock', icon: Package, action: () => onSelectTab('inventory') },
+    { id: 'spareparts', label: 'Parts', icon: Wrench, action: () => onSelectTab('spareparts') },
     { id: 'buy', label: 'Buy', icon: PlusCircle, isAction: true, action: onOpenQuickBuy },
     { id: 'sell', label: 'Sell', icon: Receipt, isAction: true, action: onOpenQuickSell },
     { id: 'reports', label: 'Reports', icon: BarChart3, action: () => onSelectTab('reports') },
-    { id: 'settings', label: 'Settings', icon: Settings, action: () => onSelectTab('settings') },
+    { id: 'logout', label: 'Logout', icon: LogOut, isLogout: true, action: () => onLogout && onLogout() },
   ];
 
   return (
@@ -42,6 +45,19 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                 <div className={`p-1 rounded-full ${tab.id === 'buy' ? 'bg-teal-100 dark:bg-teal-950/60' : 'bg-blue-100 dark:bg-blue-950/60'}`}>
                   <Icon className="w-4 h-4" />
                 </div>
+                <span>{tab.label}</span>
+              </button>
+            );
+          }
+
+          if ((tab as any).isLogout) {
+            return (
+              <button
+                key={tab.id}
+                onClick={tab.action}
+                className="flex flex-col items-center justify-center p-1 rounded-lg text-[10px] font-bold text-red-500 dark:text-red-400"
+              >
+                <Icon className="w-4 h-4 mb-0.5" />
                 <span>{tab.label}</span>
               </button>
             );

@@ -12,7 +12,8 @@ import {
   LogOut,
   Sun,
   Moon,
-  ShieldCheck
+  ShieldCheck,
+  Wrench
 } from 'lucide-react';
 import { Logo } from './Logo';
 import type { UserProfile } from '../../types';
@@ -52,6 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', label: 'Inventory Stock', icon: Package },
+    { id: 'spareparts', label: 'Spare Parts (Cart)', icon: Wrench },
     { id: 'purchases', label: 'Purchases (Buy)', icon: ShoppingBag },
     { id: 'sales', label: 'Sales & Billing', icon: Receipt },
     { id: 'customers', label: 'Customers', icon: Users },

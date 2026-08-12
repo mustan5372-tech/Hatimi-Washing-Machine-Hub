@@ -34,6 +34,8 @@ import { InvoiceView } from './components/invoices/InvoiceView';
 import { CustomerList } from './components/customers/CustomerList';
 import { ReportsOverview } from './components/reports/ReportsOverview';
 import { QRScannerModal } from './components/common/QRScannerModal';
+import { SparePartsOverview } from './components/spareparts/SparePartsOverview';
+import { BulkPurchaseModal } from './components/purchases/BulkPurchaseModal';
 
 import { StaffLoginModal } from './components/auth/StaffLoginModal';
 import { PublicCustomerPortal } from './components/public/PublicCustomerPortal';
@@ -100,6 +102,7 @@ export default function App() {
   const [qrMachine, setQrMachine] = useState<InventoryMachine | null>(null);
   
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [isBulkPurchaseModalOpen, setIsBulkPurchaseModalOpen] = useState(false);
   const [selectedPurchase, setSelectedPurchase] = useState<PurchaseRecord | null>(null);
 
   const [isSaleModalOpen, setIsSaleModalOpen] = useState(false);
@@ -323,12 +326,17 @@ export default function App() {
             />
           )}
 
+          {activeTab === 'spareparts' && (
+            <SparePartsOverview settings={businessSettings} />
+          )}
+
           {activeTab === 'purchases' && (
             <PurchaseList
               purchases={purchases}
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
               onOpenAddPurchase={() => setIsPurchaseModalOpen(true)}
+              onOpenBulkPurchase={() => setIsBulkPurchaseModalOpen(true)}
               onSelectPurchase={(p) => setSelectedPurchase(p)}
             />
           )}
@@ -424,6 +432,15 @@ export default function App() {
         onSuccess={(stockId) => {
           refreshData();
           setSelectedMachineStockId(stockId);
+        }}
+      />
+
+      <BulkPurchaseModal
+        isOpen={isBulkPurchaseModalOpen}
+        onClose={() => setIsBulkPurchaseModalOpen(false)}
+        onSuccess={() => {
+          refreshData();
+          setActiveTab('inventory');
         }}
       />
 
@@ -525,6 +542,7 @@ export default function App() {
           setSellModalStockId(undefined);
           setIsSaleModalOpen(true);
         }}
+        onLogout={handleLogout}
       />
     </div>
   );

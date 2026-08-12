@@ -423,9 +423,19 @@ export const MachineFormModal: React.FC<MachineFormModalProps> = ({
                   required
                   min="0"
                   value={sellingPrice}
-                  onChange={(e) => setSellingPrice(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSellingPrice(val);
+                    const p = parseFloat(val) || 0;
+                    if (p <= 5000) setWarrantyDays('30');
+                    else if (p <= 10000) setWarrantyDays('60');
+                    else setWarrantyDays('90');
+                  }}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:border-teal-500"
                 />
+                <p className="text-[10px] text-teal-600 dark:text-teal-400 mt-1">
+                  ⚡ Auto-syncs price across all units of model <span className="font-bold">{brand} {model || 'Item'}</span>
+                </p>
               </div>
 
               <div>
@@ -523,15 +533,20 @@ export const MachineFormModal: React.FC<MachineFormModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Warranty Days
+                  Warranty Days (Auto Tier) *
                 </label>
-                <input
-                  type="number"
-                  value={warrantyDays}
-                  onChange={(e) => setWarrantyDays(e.target.value)}
-                  placeholder="e.g. 30"
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    value={warrantyDays}
+                    onChange={(e) => setWarrantyDays(e.target.value)}
+                    placeholder="e.g. 30"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white"
+                  />
+                  <span className="shrink-0 px-2.5 py-1 bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 font-bold text-[10px] rounded-lg border border-amber-300 dark:border-amber-700">
+                    {numSell <= 5000 ? '30 Days Tier (≤₹5k)' : numSell <= 10000 ? '60 Days Tier (₹5k-₹10k)' : '90 Days Tier (>₹10k)'}
+                  </span>
+                </div>
               </div>
             </div>
 

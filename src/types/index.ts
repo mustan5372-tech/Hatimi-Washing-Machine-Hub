@@ -187,3 +187,49 @@ export interface DashboardStats {
   monthlyGrossProfit: number;
   outstandingPayments: number;
 }
+
+export type SparePartCategory = 'Buffer & Rubber' | 'Drum & Tub' | 'Electrical & Timer' | 'Motors & Gearbox' | 'Valves & Hoses' | 'General Spare';
+
+export interface SparePart {
+  id: string;
+  partNumber: string; // SP-0001
+  name: string;
+  category: SparePartCategory;
+  price: number;
+  totalSold: number; // tracked count of units sold (unlimited stock)
+  isUnlimited: boolean;
+  brandCompatibility?: string;
+  description?: string;
+  imageUrl?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SparePartCartItem {
+  partId: string;
+  partNumber: string;
+  partName: string;
+  unitPrice: number;
+  quantity: number;
+  totalPrice: number;
+}
+
+export interface SparePartSaleRecord {
+  id: string;
+  invoiceNumber: string; // SPINV-2026-0001
+  customerName: string;
+  customerPhone: string;
+  customerAddress?: string;
+  items: SparePartCartItem[];
+  subtotal: number;
+  discount: number;
+  totalAmount: number;
+  amountPaid: number;
+  balanceDue: number;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  saleDate: string;
+  notes?: string;
+  createdAt: string;
+}
+

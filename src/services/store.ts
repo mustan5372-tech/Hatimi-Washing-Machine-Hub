@@ -9,7 +9,10 @@ import type {
   AppNotification,
   DashboardStats,
   PaymentTransaction,
-  PaymentMethod
+  PaymentMethod,
+  SparePart,
+  SparePartSaleRecord,
+  SparePartCartItem
 } from '../types';
 
 import {
@@ -19,7 +22,9 @@ import {
   INITIAL_CUSTOMERS,
   INITIAL_SALES,
   INITIAL_EXPENSES,
-  INITIAL_USERS
+  INITIAL_USERS,
+  INITIAL_SPARE_PARTS,
+  INITIAL_SPARE_PART_SALES
 } from './seedData';
 import { initFirebase } from './firebase';
 import {
@@ -28,6 +33,7 @@ import {
   syncCollectionToFirestore,
   deleteDocFromFirestore
 } from './firestoreSync';
+import { calculateDefaultWarranty } from '../utils/warranty';
 
 const SETTINGS_KEY = 'hwmh_settings';
 const INVENTORY_KEY = 'hwmh_inventory';
@@ -37,6 +43,8 @@ const SALES_KEY = 'hwmh_sales';
 const EXPENSES_KEY = 'hwmh_expenses';
 const USERS_KEY = 'hwmh_users';
 const CURRENT_USER_KEY = 'hwmh_current_user';
+const SPARE_PARTS_KEY = 'hwmh_spare_parts';
+const SPARE_PART_SALES_KEY = 'hwmh_spare_part_sales';
 
 type Listener = () => void;
 const listeners: Set<Listener> = new Set();
@@ -226,15 +234,49 @@ export const generateNextInvoiceNumber = (): string => {
   return `${settings.invoicePrefix}${nextNum.toString().padStart(4, '0')}`;
 };
 
+// --- Helper for Same Model Price Synchronization ---
+export const syncSameModelPrices = (brand: string, model: string, sellingPrice: number, minSellingPrice?: number) => {
+  const inventory = getInventory();
+  const cleanBrand = brand.trim().toLowerCase();
+  const cleanModel = model.trim().toLowerCase();
+  let changed = false;
+
+  const updatedInventory = inventory.map(m => {
+    if (m.brand.trim().toLowerCase() === cleanBrand && m.model.trim().toLowerCase() === cleanModel) {
+      if (m.sellingPrice !== sellingPrice) {
+        changed = true;
+        const updatedMachine = {
+          ...m,
+          sellingPrice,
+          minSellingPrice: minSellingPrice !== undefined ? minSellingPrice : Math.round(sellingPrice * 0.9),
+          updatedAt: new Date().toISOString()
+        };
+        syncDocToFirestore('inventory', updatedMachine.id || updatedMachine.stockId, updatedMachine);
+        return updatedMachine;
+      }
+    }
+    return m;
+  });
+
+  if (changed) {
+    saveData(INVENTORY_KEY, updatedInventory);
+  }
+};
+
 // --- Inventory ---
 export const getInventory = (): InventoryMachine[] => {
   return loadData<InventoryMachine[]>(INVENTORY_KEY, INITIAL_INVENTORY);
 };
 
-export const saveMachine = (machine: InventoryMachine) => {
+export const saveMachine = (machine: InventoryMachine, syncModelPrice: boolean = true) => {
   const inventory = getInventory();
   const idx = inventory.findIndex(m => m.id === machine.id || m.stockId === machine.stockId);
   
+  // Auto calculate default warranty based on selling price if not custom
+  if (!machine.warrantyDays) {
+    machine.warrantyDays = calculateDefaultWarranty(machine.sellingPrice);
+  }
+
   // recalculate total cost
   machine.totalCost = (machine.purchasePrice || 0) + 
                       (machine.repairExpenses || 0) + 
@@ -250,6 +292,11 @@ export const saveMachine = (machine: InventoryMachine) => {
   saveData(INVENTORY_KEY, inventory);
   // Firestore sync
   syncDocToFirestore('inventory', machine.id || machine.stockId, machine);
+
+  // Sync price across all machines of the same model if enabled
+  if (syncModelPrice && machine.brand && machine.model && machine.sellingPrice > 0) {
+    syncSameModelPrices(machine.brand, machine.model, machine.sellingPrice, machine.minSellingPrice);
+  }
 };
 
 export const deleteMachine = (id: string) => {
@@ -321,9 +368,22 @@ export const addPurchaseRecord = (purchase: Omit<PurchaseRecord, 'id' | 'stockId
   // Firestore sync
   syncDocToFirestore('purchases', newPurchase.id, newPurchase);
 
-  // Auto create corresponding inventory item
+  const targetSellingPrice = Math.round(purchase.purchasePrice * 1.5);
+
+  // Check if existing machines of same model exist to sync price
+  const inventory = getInventory();
+  const existingSameModel = inventory.find(
+    m => m.brand.toLowerCase().trim() === purchase.machineBrand.toLowerCase().trim() &&
+         m.model.toLowerCase().trim() === purchase.machineModel.toLowerCase().trim() &&
+         m.sellingPrice > 0
+  );
+  
+  const finalSellingPrice = existingSameModel ? existingSameModel.sellingPrice : targetSellingPrice;
+  const finalMinSellingPrice = existingSameModel ? existingSameModel.minSellingPrice : Math.round(targetSellingPrice * 0.9);
+
+  // Auto create corresponding inventory item with price-based default warranty tier
   const newMachine: InventoryMachine = {
-    id: `mach-${Date.now()}`,
+    id: `mach-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
     stockId: stockId,
     brand: purchase.machineBrand,
     model: purchase.machineModel,
@@ -339,11 +399,11 @@ export const addPurchaseRecord = (purchase: Omit<PurchaseRecord, 'id' | 'stockId
     transportExpenses: 0,
     otherExpenses: 0,
     totalCost: purchase.purchasePrice,
-    sellingPrice: Math.round(purchase.purchasePrice * 1.5),
-    minSellingPrice: Math.round(purchase.purchasePrice * 1.3),
+    sellingPrice: finalSellingPrice,
+    minSellingPrice: finalMinSellingPrice,
     condition: purchase.condition,
-    warrantyDays: 30,
-    description: `Purchased from ${purchase.sellerName}. ${purchase.notes || ''}`,
+    warrantyDays: calculateDefaultWarranty(finalSellingPrice),
+    description: `Purchased from ${purchase.sellerName || 'Bulk Lot'}. ${purchase.notes || ''}`,
     photos: purchase.photos && purchase.photos.length > 0 ? purchase.photos : ['https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=600&q=80'],
     sellerId: newPurchase.id,
     sellerName: purchase.sellerName,
@@ -355,6 +415,78 @@ export const addPurchaseRecord = (purchase: Omit<PurchaseRecord, 'id' | 'stockId
   saveMachine(newMachine);
 
   return newPurchase;
+};
+
+// --- Bulk Purchase Machine Lots (Without Buyer / Custom Prices) ---
+export const addBulkPurchaseRecords = (bulkLot: {
+  sellerName?: string;
+  sellerPhone?: string;
+  sellerAddress?: string;
+  notes?: string;
+  paymentMethod?: PaymentMethod;
+  purchaseDate?: string;
+  items: Array<{
+    brand: string;
+    model: string;
+    capacityKg: number;
+    type: any;
+    condition: any;
+    quantity: number;
+    purchasePricePerUnit: number;
+    sellingPricePerUnit?: number;
+  }>;
+}): PurchaseRecord[] => {
+  const createdPurchases: PurchaseRecord[] = [];
+  const seller = bulkLot.sellerName?.trim() || 'Bulk Lot / Wholesale Purchase';
+  const phone = bulkLot.sellerPhone?.trim() || 'N/A';
+  const address = bulkLot.sellerAddress?.trim() || 'Bulk Lot';
+  const pDate = bulkLot.purchaseDate || new Date().toISOString().split('T')[0];
+  const pMethod = bulkLot.paymentMethod || 'UPI';
+
+  bulkLot.items.forEach((item) => {
+    const qty = Math.max(1, item.quantity || 1);
+    const unitPurPrice = Number(item.purchasePricePerUnit) || 0;
+    
+    for (let q = 0; q < qty; q++) {
+      const stockId = generateNextStockId();
+      const serialNumber = generateNextSerialNumber();
+
+      const pRecord = addPurchaseRecord({
+        stockId,
+        sellerName: seller,
+        sellerPhone: phone,
+        sellerAddress: address,
+        machineBrand: item.brand,
+        machineModel: item.model,
+        serialNumber,
+        capacityKg: item.capacityKg || 7.0,
+        type: item.type || 'Fully Automatic',
+        condition: item.condition || 'Good',
+        purchasePrice: unitPurPrice,
+        amountPaid: unitPurPrice,
+        remainingAmount: 0,
+        paymentMethod: pMethod,
+        purchaseDate: pDate,
+        notes: `Bulk Addition: Unit ${q + 1} of ${qty}. ${bulkLot.notes || ''}`
+      });
+
+      // If explicit selling price was set in bulk form, update it & sync model prices
+      if (item.sellingPricePerUnit && item.sellingPricePerUnit > 0) {
+        const inv = getInventory();
+        const mach = inv.find(m => m.stockId === stockId);
+        if (mach) {
+          mach.sellingPrice = item.sellingPricePerUnit;
+          mach.minSellingPrice = Math.round(item.sellingPricePerUnit * 0.9);
+          mach.warrantyDays = calculateDefaultWarranty(item.sellingPricePerUnit);
+          saveMachine(mach, true);
+        }
+      }
+
+      createdPurchases.push(pRecord);
+    }
+  });
+
+  return createdPurchases;
 };
 
 // --- Customers ---
@@ -428,6 +560,11 @@ export const createSaleTransaction = (saleData: {
   const calculatedProfit = finalAmount - machine.totalCost;
   const profitMarginPct = finalAmount > 0 ? Number(((calculatedProfit / finalAmount) * 100).toFixed(2)) : 0;
 
+  // Auto-calculated warranty tier based on final billed amount if not specified
+  const effectiveWarrantyDays = saleData.warrantyDays !== undefined && saleData.warrantyDays > 0
+    ? saleData.warrantyDays
+    : calculateDefaultWarranty(finalAmount);
+
   // Find or create customer
   let customers = getCustomers();
   let customer = customers.find(c => c.phone.trim() === saleData.customerPhone.trim() || c.name.toLowerCase().trim() === saleData.customerName.toLowerCase().trim());
@@ -485,7 +622,7 @@ export const createSaleTransaction = (saleData: {
     paymentStatus,
     paymentMethod: saleData.paymentMethod,
     saleDate: saleData.saleDate,
-    warrantyDays: saleData.warrantyDays || machine.warrantyDays || 30,
+    warrantyDays: effectiveWarrantyDays,
     calculatedProfit,
     profitMarginPct,
     notes: saleData.notes,
@@ -504,6 +641,7 @@ export const createSaleTransaction = (saleData: {
   // Update machine status to Sold
   machine.status = 'Sold';
   machine.sellingPrice = saleData.sellingPrice;
+  machine.warrantyDays = effectiveWarrantyDays;
   saveMachine(machine);
 
   return { sale: newSale, machine, customer };
@@ -551,6 +689,151 @@ export const recordSalePayment = (invoiceNumber: string, amount: number, payment
   }
 
   return sale;
+};
+
+// --- SPARE PARTS MANAGEMENT ---
+export const getSpareParts = (): SparePart[] => {
+  return loadData<SparePart[]>(SPARE_PARTS_KEY, INITIAL_SPARE_PARTS);
+};
+
+export const generateNextSparePartNumber = (): string => {
+  const parts = getSpareParts();
+  let maxNum = 0;
+  parts.forEach(p => {
+    const match = p.partNumber.match(/SP-(\d+)/i);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxNum) maxNum = num;
+    }
+  });
+  const nextNum = maxNum + 1;
+  return `SP-${nextNum.toString().padStart(4, '0')}`;
+};
+
+export const saveSparePart = (part: SparePart) => {
+  const parts = getSpareParts();
+  const idx = parts.findIndex(p => p.id === part.id || p.partNumber === part.partNumber);
+
+  if (idx >= 0) {
+    parts[idx] = { ...part, updatedAt: new Date().toISOString() };
+  } else {
+    parts.unshift({ ...part, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  }
+  saveData(SPARE_PARTS_KEY, parts);
+  // Firestore sync
+  syncDocToFirestore('spareParts', part.id || part.partNumber, part);
+};
+
+export const deleteSparePart = (id: string) => {
+  const part = getSpareParts().find(p => p.id === id || p.partNumber === id);
+  const parts = getSpareParts().filter(p => p.id !== id && p.partNumber !== id);
+  saveData(SPARE_PARTS_KEY, parts);
+  // Firestore sync
+  if (part) {
+    deleteDocFromFirestore('spareParts', part.id || part.partNumber);
+  }
+};
+
+// --- SPARE PART SALES & CART SYSTEM ---
+export const getSparePartSales = (): SparePartSaleRecord[] => {
+  return loadData<SparePartSaleRecord[]>(SPARE_PART_SALES_KEY, INITIAL_SPARE_PART_SALES);
+};
+
+export const generateNextSparePartInvoiceNumber = (): string => {
+  const sales = getSparePartSales();
+  let maxNum = 0;
+  sales.forEach(s => {
+    const match = s.invoiceNumber.match(/(\d+)$/);
+    if (match) {
+      const num = parseInt(match[1], 10);
+      if (num > maxNum) maxNum = num;
+    }
+  });
+  const nextNum = maxNum + 1;
+  return `SPINV-2026-${nextNum.toString().padStart(4, '0')}`;
+};
+
+export const createSparePartSale = (saleData: {
+  customerName: string;
+  customerPhone: string;
+  customerAddress?: string;
+  items: SparePartCartItem[];
+  discount: number;
+  amountPaid: number;
+  paymentMethod: PaymentMethod;
+  saleDate: string;
+  notes?: string;
+}): SparePartSaleRecord => {
+  if (!saleData.items || saleData.items.length === 0) {
+    throw new Error('Cart is empty. Select at least one spare part to purchase.');
+  }
+
+  const subtotal = saleData.items.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  const totalAmount = Math.max(0, subtotal - saleData.discount);
+  const balanceDue = Math.max(0, totalAmount - saleData.amountPaid);
+  const paymentStatus = balanceDue === 0 ? 'Paid' : (saleData.amountPaid > 0 ? 'Partially Paid' : 'Unpaid');
+
+  // Generate Spare Part Invoice Number
+  const invoiceNumber = generateNextSparePartInvoiceNumber();
+
+  // 1. Increment totalSold count for each sold spare part
+  const parts = getSpareParts();
+  saleData.items.forEach(cartItem => {
+    const pIdx = parts.findIndex(p => p.id === cartItem.partId || p.partNumber === cartItem.partNumber);
+    if (pIdx >= 0) {
+      parts[pIdx].totalSold = (parts[pIdx].totalSold || 0) + cartItem.quantity;
+      parts[pIdx].updatedAt = new Date().toISOString();
+      syncDocToFirestore('spareParts', parts[pIdx].id, parts[pIdx]);
+    }
+  });
+  saveData(SPARE_PARTS_KEY, parts);
+
+  // 2. Save or update customer
+  let customers = getCustomers();
+  let customer = customers.find(c => c.phone.trim() === saleData.customerPhone.trim() || c.name.toLowerCase().trim() === saleData.customerName.toLowerCase().trim());
+  
+  if (!customer) {
+    customer = saveCustomer({
+      name: saleData.customerName,
+      phone: saleData.customerPhone,
+      address: saleData.customerAddress
+    });
+  } else {
+    customer.address = saleData.customerAddress || customer.address;
+  }
+
+  customer.totalSpent += totalAmount;
+  customer.pendingAmount += balanceDue;
+  saveCustomer(customer);
+
+  // 3. Create Spare Part Sale Record
+  const newSpareSale: SparePartSaleRecord = {
+    id: `spsale-${Date.now()}`,
+    invoiceNumber,
+    customerName: saleData.customerName,
+    customerPhone: saleData.customerPhone,
+    customerAddress: saleData.customerAddress,
+    items: saleData.items,
+    subtotal,
+    discount: saleData.discount,
+    totalAmount,
+    amountPaid: saleData.amountPaid,
+    balanceDue,
+    paymentMethod: saleData.paymentMethod,
+    paymentStatus,
+    saleDate: saleData.saleDate,
+    notes: saleData.notes,
+    createdAt: new Date().toISOString()
+  };
+
+  const spareSales = getSparePartSales();
+  spareSales.unshift(newSpareSale);
+  saveData(SPARE_PART_SALES_KEY, spareSales);
+
+  // Firestore sync
+  syncDocToFirestore('sparePartSales', newSpareSale.id, newSpareSale);
+
+  return newSpareSale;
 };
 
 // --- Notifications & Alerts ---
@@ -682,6 +965,8 @@ export const resetStoreToSeedData = () => {
   localStorage.setItem(EXPENSES_KEY, JSON.stringify(INITIAL_EXPENSES));
   localStorage.setItem(USERS_KEY, JSON.stringify(INITIAL_USERS));
   localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(INITIAL_USERS[0]));
+  localStorage.setItem(SPARE_PARTS_KEY, JSON.stringify(INITIAL_SPARE_PARTS));
+  localStorage.setItem(SPARE_PART_SALES_KEY, JSON.stringify(INITIAL_SPARE_PART_SALES));
   notifyListeners();
 
   // Firestore sync all collections
@@ -692,4 +977,6 @@ export const resetStoreToSeedData = () => {
   syncCollectionToFirestore('sales', INITIAL_SALES);
   syncCollectionToFirestore('expenses', INITIAL_EXPENSES);
   syncCollectionToFirestore('users', INITIAL_USERS);
+  syncCollectionToFirestore('spareParts', INITIAL_SPARE_PARTS);
+  syncCollectionToFirestore('sparePartSales', INITIAL_SPARE_PART_SALES);
 };

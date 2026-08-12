@@ -8,6 +8,7 @@ interface PurchaseListProps {
   onSearchChange?: (val: string) => void;
   onOpenAddPurchase?: () => void;
   onOpenNewPurchase?: () => void;
+  onOpenBulkPurchase?: () => void;
   onSelectPurchase?: (p: PurchaseRecord) => void;
   onSelectStock?: (stockId: string) => void;
   onPrintReceipt?: (purchase: PurchaseRecord) => void;
@@ -17,6 +18,7 @@ export const PurchaseList: React.FC<PurchaseListProps> = ({
   purchases,
   onOpenAddPurchase,
   onOpenNewPurchase,
+  onOpenBulkPurchase,
   onSelectPurchase,
   onSelectStock,
   onPrintReceipt
@@ -46,17 +48,28 @@ export const PurchaseList: React.FC<PurchaseListProps> = ({
             Machine Purchase Records ({purchases.length})
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            History of all second-hand washing machines bought from sellers.
+            History of all second-hand washing machines bought individually or in bulk.
           </p>
         </div>
 
-        <button
-          onClick={onOpenAddPurchase || onOpenNewPurchase}
-          className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-colors"
-        >
-          <PlusCircle className="w-4 h-4" />
-          + Buy Machine (New Purchase)
-        </button>
+        <div className="flex items-center gap-2">
+          {onOpenBulkPurchase && (
+            <button
+              onClick={onOpenBulkPurchase}
+              className="px-3.5 py-2 bg-teal-800 hover:bg-teal-900 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-colors border border-teal-700"
+            >
+              <PlusCircle className="w-4 h-4" />
+              + Bulk Purchase Lot Entry
+            </button>
+          )}
+          <button
+            onClick={onOpenAddPurchase || onOpenNewPurchase}
+            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-colors"
+          >
+            <PlusCircle className="w-4 h-4" />
+            + Buy Machine (Single)
+          </button>
+        </div>
       </div>
 
       {/* Financial Spend Summary */}

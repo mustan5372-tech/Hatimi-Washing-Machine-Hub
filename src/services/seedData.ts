@@ -1,4 +1,4 @@
-import type { BusinessSettings, InventoryMachine, Customer, PurchaseRecord, SaleRecord, MachineExpense, UserProfile } from '../types';
+import type { BusinessSettings, InventoryMachine, Customer, PurchaseRecord, SaleRecord, MachineExpense, UserProfile, SparePart, SparePartSaleRecord } from '../types';
 
 export const INITIAL_SETTINGS: BusinessSettings = {
   shopName: "Hatimi Washing Machine Hub",
@@ -649,3 +649,185 @@ export const INITIAL_SALES: SaleRecord[] = [
     createdAt: "2026-08-03T14:20:00.000Z"
   }
 ];
+
+export const INITIAL_SPARE_PARTS: SparePart[] = [
+  {
+    id: "sp-1",
+    partNumber: "SP-0001",
+    name: "Spin Tub Rubber Buffer Seal",
+    category: "Buffer & Rubber",
+    price: 250,
+    totalSold: 14,
+    isUnlimited: true,
+    brandCompatibility: "Universal / LG / Samsung / Whirlpool",
+    description: "Heavy-duty waterproof rubber buffer seal for semi-automatic spin tub shaft.",
+    imageUrl: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80",
+    createdAt: "2026-08-01T08:00:00.000Z",
+    updatedAt: "2026-08-01T08:00:00.000Z"
+  },
+  {
+    id: "sp-2",
+    partNumber: "SP-0002",
+    name: "Spin Drier Stainless Drum 6.5kg",
+    category: "Drum & Tub",
+    price: 1200,
+    totalSold: 6,
+    isUnlimited: true,
+    brandCompatibility: "LG / Samsung Semi-Auto",
+    description: "Premium rust-proof stainless steel drier drum with smooth dynamic balance.",
+    imageUrl: "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=400&q=80",
+    createdAt: "2026-08-01T08:30:00.000Z",
+    updatedAt: "2026-08-01T08:30:00.000Z"
+  },
+  {
+    id: "sp-3",
+    partNumber: "SP-0003",
+    name: "Polypropylene Washer Drum Tub Assembly",
+    category: "Drum & Tub",
+    price: 1500,
+    totalSold: 4,
+    isUnlimited: true,
+    brandCompatibility: "Whirlpool / Godrej 7kg",
+    description: "High impact resistant outer wash tub container.",
+    imageUrl: "https://images.unsplash.com/photo-1626806787461-102c1bfaaea1?auto=format&fit=crop&w=400&q=80",
+    createdAt: "2026-08-01T09:00:00.000Z",
+    updatedAt: "2026-08-01T09:00:00.000Z"
+  },
+  {
+    id: "sp-4",
+    partNumber: "SP-0004",
+    name: "4-Wire Mechanical Wash Timer Switch",
+    category: "Electrical & Timer",
+    price: 350,
+    totalSold: 22,
+    isUnlimited: true,
+    brandCompatibility: "Universal Semi Automatic",
+    description: "15 minute wash timer mechanism with copper contacts.",
+    imageUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&q=80",
+    createdAt: "2026-08-01T09:30:00.000Z",
+    updatedAt: "2026-08-01T09:30:00.000Z"
+  },
+  {
+    id: "sp-5",
+    partNumber: "SP-0005",
+    name: "150W Copper Wash Motor",
+    category: "Motors & Gearbox",
+    price: 1800,
+    totalSold: 8,
+    isUnlimited: true,
+    brandCompatibility: "LG / Samsung / Whirlpool",
+    description: "High torque 100% pure copper winding wash motor assembly.",
+    imageUrl: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=400&q=80",
+    createdAt: "2026-08-01T10:00:00.000Z",
+    updatedAt: "2026-08-01T10:00:00.000Z"
+  },
+  {
+    id: "sp-6",
+    partNumber: "SP-0006",
+    name: "60W Heavy Duty Spin Motor",
+    category: "Motors & Gearbox",
+    price: 1400,
+    totalSold: 11,
+    isUnlimited: true,
+    brandCompatibility: "Universal 1350 RPM",
+    description: "High speed spin drier motor with thermal overload protector.",
+    imageUrl: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=400&q=80",
+    createdAt: "2026-08-01T10:30:00.000Z",
+    updatedAt: "2026-08-01T10:30:00.000Z"
+  },
+  {
+    id: "sp-7",
+    partNumber: "SP-0007",
+    name: "Square Shaft Gearbox Reducer",
+    category: "Motors & Gearbox",
+    price: 650,
+    totalSold: 15,
+    isUnlimited: true,
+    brandCompatibility: "LG Roller Jet Pulsator",
+    description: "Double gear planetary gear box reducer for wash pulsator.",
+    imageUrl: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80",
+    createdAt: "2026-08-01T11:00:00.000Z",
+    updatedAt: "2026-08-01T11:00:00.000Z"
+  },
+  {
+    id: "sp-8",
+    partNumber: "SP-0008",
+    name: "Universal Drain Valve Rubber & Bellow",
+    category: "Valves & Hoses",
+    price: 150,
+    totalSold: 28,
+    isUnlimited: true,
+    brandCompatibility: "Universal",
+    description: "Soft silicone drain seal bellow with return spring.",
+    imageUrl: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=400&q=80",
+    createdAt: "2026-08-01T11:30:00.000Z",
+    updatedAt: "2026-08-01T11:30:00.000Z"
+  },
+  {
+    id: "sp-9",
+    partNumber: "SP-0009",
+    name: "Dual Run Capacitor 10+5 MFD",
+    category: "Electrical & Timer",
+    price: 220,
+    totalSold: 35,
+    isUnlimited: true,
+    brandCompatibility: "Universal 450V AC",
+    description: "Heavy duty motor start & run dual capacitor.",
+    imageUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&q=80",
+    createdAt: "2026-08-01T12:00:00.000Z",
+    updatedAt: "2026-08-01T12:00:00.000Z"
+  },
+  {
+    id: "sp-10",
+    partNumber: "SP-0010",
+    name: "Universal Pulsator Disc 330mm",
+    category: "Buffer & Rubber",
+    price: 450,
+    totalSold: 9,
+    isUnlimited: true,
+    brandCompatibility: "Samsung / LG Semi-Auto",
+    description: "11-teeth gear pulsator wheel for intense wash agitation.",
+    imageUrl: "https://images.unsplash.com/photo-1582735689369-4fe89db7114c?auto=format&fit=crop&w=400&q=80",
+    createdAt: "2026-08-01T12:30:00.000Z",
+    updatedAt: "2026-08-01T12:30:00.000Z"
+  }
+];
+
+export const INITIAL_SPARE_PART_SALES: SparePartSaleRecord[] = [
+  {
+    id: "spsale-1",
+    invoiceNumber: "SPINV-2026-0001",
+    customerName: "Rahul Sharma",
+    customerPhone: "+91 98200 11223",
+    customerAddress: "Andheri West, Mumbai",
+    items: [
+      {
+        partId: "sp-1",
+        partNumber: "SP-0001",
+        partName: "Spin Tub Rubber Buffer Seal",
+        unitPrice: 250,
+        quantity: 2,
+        totalPrice: 500
+      },
+      {
+        partId: "sp-4",
+        partNumber: "SP-0004",
+        partName: "4-Wire Mechanical Wash Timer Switch",
+        unitPrice: 350,
+        quantity: 1,
+        totalPrice: 350
+      }
+    ],
+    subtotal: 850,
+    discount: 50,
+    totalAmount: 800,
+    amountPaid: 800,
+    balanceDue: 0,
+    paymentMethod: "UPI",
+    paymentStatus: "Paid",
+    saleDate: "2026-08-08",
+    notes: "Spare parts counter sale",
+    createdAt: "2026-08-08T14:00:00.000Z"
+  }
+];
+

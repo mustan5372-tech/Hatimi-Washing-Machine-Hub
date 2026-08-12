@@ -348,7 +348,7 @@ export const SellMachineModal: React.FC<SellMachineModalProps> = ({
           {/* Section 3: Sale Pricing & Payment Settlement */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 border-b border-slate-200 dark:border-slate-700 pb-1">
-              3. Sale Pricing & Initial Payment
+              3. Sale Pricing & Warranty Tier Settlement
             </h4>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -361,7 +361,14 @@ export const SellMachineModal: React.FC<SellMachineModalProps> = ({
                   required
                   min="1"
                   value={sellingPrice}
-                  onChange={(e) => setSellingPrice(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setSellingPrice(val);
+                    const net = Math.max(0, (parseFloat(val) || 0) - numDisc);
+                    if (net <= 5000) setWarrantyDays('30');
+                    else if (net <= 10000) setWarrantyDays('60');
+                    else setWarrantyDays('90');
+                  }}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-900 dark:text-white focus:border-teal-500"
                 />
               </div>
@@ -374,7 +381,14 @@ export const SellMachineModal: React.FC<SellMachineModalProps> = ({
                   type="number"
                   min="0"
                   value={discount}
-                  onChange={(e) => setDiscount(e.target.value)}
+                  onChange={(e) => {
+                    const dVal = e.target.value;
+                    setDiscount(dVal);
+                    const net = Math.max(0, numSell - (parseFloat(dVal) || 0));
+                    if (net <= 5000) setWarrantyDays('30');
+                    else if (net <= 10000) setWarrantyDays('60');
+                    else setWarrantyDays('90');
+                  }}
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:border-teal-500"
                 />
               </div>
@@ -410,6 +424,25 @@ export const SellMachineModal: React.FC<SellMachineModalProps> = ({
               </div>
             </div>
 
+            {/* Warranty Tier Banner */}
+            <div className="p-3 bg-teal-50/80 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-teal-800 dark:text-teal-300">Automated Warranty Tier:</span>
+                <span className="px-2.5 py-0.5 rounded-lg bg-teal-600 text-white font-bold text-xs">
+                  {finalAmount <= 5000 ? '30 Days Warranty (0-₹5,000)' : finalAmount <= 10000 ? '60 Days Warranty (₹5,000-₹10,000)' : '90 Days Warranty (>₹10,000)'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="text-[11px] text-slate-500">Custom Days:</span>
+                <input
+                  type="number"
+                  value={warrantyDays}
+                  onChange={(e) => setWarrantyDays(e.target.value)}
+                  className="w-16 px-2 py-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-xs text-center font-bold"
+                />
+              </div>
+            </div>
+
             {/* Financial Summary Pill */}
             <div className="p-3.5 bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl space-y-2 text-xs">
               <div className="flex items-center justify-between">
@@ -424,6 +457,9 @@ export const SellMachineModal: React.FC<SellMachineModalProps> = ({
               </div>
               <div className="flex items-center justify-between text-[11px] text-slate-500">
                 <span>Calculated Net Profit: ₹{calculatedProfit.toLocaleString('en-IN')} ({marginPct}% margin)</span>
+                {selectedMachine && (
+                  <span className="text-teal-600 dark:text-teal-400 font-medium">Uniform Model Pricing Active</span>
+                )}
               </div>
             </div>
           </div>
