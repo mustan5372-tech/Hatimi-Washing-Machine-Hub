@@ -59,7 +59,7 @@ export const Header: React.FC<HeaderProps> = ({
               type="text"
               value={searchTerm}
               onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
-              placeholder="Search Stock ID (WM-0001), Brand, Customer, Invoice..."
+              placeholder="Search Customer Name, Phone, Stock ID (WM-0001), Brand, Invoice..."
               className="w-full pl-9 pr-4 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 rounded-lg text-xs md:text-sm border border-transparent focus:border-teal-500 focus:outline-none transition-colors"
             />
             {searchTerm && (

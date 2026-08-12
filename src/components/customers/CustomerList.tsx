@@ -15,12 +15,20 @@ interface CustomerListProps {
 
 export const CustomerList: React.FC<CustomerListProps> = ({
   customers,
+  searchTerm: propSearchTerm = '',
+  onSearchChange,
   onSelectSale,
   onViewInvoice,
   onRecordPayment
 }) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const searchTerm = propSearchTerm || localSearchTerm;
+
+  const handleSearchChange = (val: string) => {
+    setLocalSearchTerm(val);
+    if (onSearchChange) onSearchChange(val);
+  };
 
   const sales = getSales();
 
@@ -30,6 +38,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
       c.name.toLowerCase().includes(query) ||
       c.phone.toLowerCase().includes(query) ||
       c.customerId.toLowerCase().includes(query) ||
+      (c.email && c.email.toLowerCase().includes(query)) ||
       (c.address && c.address.toLowerCase().includes(query))
     );
   });
@@ -44,7 +53,7 @@ export const CustomerList: React.FC<CustomerListProps> = ({
             Customer Management ({customers.length})
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Directory of buyers, purchase history, and outstanding balance ledgers.
+            Search buyers by customer name, phone number, address, or customer ID.
           </p>
         </div>
       </div>
@@ -56,8 +65,8 @@ export const CustomerList: React.FC<CustomerListProps> = ({
           <input
             type="text"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search customer name, phone, Customer ID..."
+            onChange={(e) => handleSearchChange(e.target.value)}
+            placeholder="Search Customer Name, Phone, Address, ID..."
             className="w-full pl-9 pr-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-xs text-slate-900 dark:text-white focus:outline-none focus:border-teal-500"
           />
         </div>

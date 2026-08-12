@@ -51,11 +51,14 @@ export const InventoryList: React.FC<InventoryListProps> = ({
 
   // Filtered & Sorted List
   const filteredMachines = inventory.filter((m) => {
+    const q = searchTerm.toLowerCase();
+
     const matchesSearch =
-      m.stockId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.brand.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      m.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (m.serialNumber && m.serialNumber.toLowerCase().includes(searchTerm.toLowerCase()));
+      m.stockId.toLowerCase().includes(q) ||
+      m.brand.toLowerCase().includes(q) ||
+      m.model.toLowerCase().includes(q) ||
+      (m.serialNumber && m.serialNumber.toLowerCase().includes(q)) ||
+      (m.sellerName && m.sellerName.toLowerCase().includes(q));
 
     const matchesBrand = selectedBrand === 'All' || m.brand === selectedBrand;
     const matchesType = selectedType === 'All' || m.type === selectedType;

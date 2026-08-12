@@ -155,8 +155,13 @@ export default function App() {
         searchTerm={searchTerm}
         onSearchChange={(val) => {
           setSearchTerm(val);
-          if (val && activeTab !== 'inventory' && activeTab !== 'sales' && activeTab !== 'purchases') {
-            setActiveTab('inventory');
+          if (val && activeTab !== 'inventory' && activeTab !== 'sales' && activeTab !== 'purchases' && activeTab !== 'customers') {
+            const matchesCustomer = customers.some(c => c.name.toLowerCase().includes(val.toLowerCase()) || c.phone.includes(val));
+            if (matchesCustomer) {
+              setActiveTab('customers');
+            } else {
+              setActiveTab('inventory');
+            }
           }
         }}
         theme={theme}
