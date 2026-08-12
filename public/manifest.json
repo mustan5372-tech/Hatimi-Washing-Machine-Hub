@@ -1,0 +1,18 @@
+{
+  "short_name": "Hatimi Hub",
+  "name": "Hatimi Washing Machine Hub - Enterprise Stock & Billing",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0f172a",
+  "theme_color": "#0d9488",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "description": "Inventory management, sales billing, customer records, and QR code tracking for Hatimi Washing Machine Hub."
+}
