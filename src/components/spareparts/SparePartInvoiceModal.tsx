@@ -1,6 +1,7 @@
-import React from 'react';
-import { X, Printer, CheckCircle, Wrench } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Printer, CheckCircle, Wrench, Share2, Download, Loader2 } from 'lucide-react';
 import type { SparePartSaleRecord, BusinessSettings } from '../../types';
+import { downloadPDF } from '../../utils/pdfGenerator';
 
 interface SparePartInvoiceModalProps {
   isOpen: boolean;
@@ -15,10 +16,49 @@ export const SparePartInvoiceModal: React.FC<SparePartInvoiceModalProps> = ({
   settings,
   onClose
 }) => {
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const documentRef = useRef<HTMLDivElement>(null);
+
   if (!isOpen || !saleRecord) return null;
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!documentRef.current) return;
+    try {
+      setIsGeneratingPDF(true);
+      await downloadPDF(documentRef.current, `SparePart_Invoice_${saleRecord.invoiceNumber}.pdf`);
+      setToastMessage('📄 PDF Spare Part Receipt downloaded successfully!');
+      setTimeout(() => setToastMessage(''), 4000);
+    } catch (err: any) {
+      console.error('PDF Generation Error:', err);
+      setToastMessage(`❌ PDF Generation Error: ${err?.message || String(err)}`);
+      setTimeout(() => setToastMessage(''), 5000);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    const cleanPhone = saleRecord.customerPhone.replace(/[^0-9]/g, '');
+    const formattedPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
+
+    const itemsSummary = saleRecord.items
+      .map(i => `• ${i.partName} (${i.partNumber}) x${i.quantity} @ ₹${i.unitPrice.toLocaleString('en-IN')}`)
+      .join('\n');
+
+    const publicUrl = `${window.location.origin}/#invoice=${saleRecord.invoiceNumber}`;
+
+    const text = `🛠️ *HATIMI WASHING MACHINE HUB*\n*SPARE PARTS INVOICE:* #${saleRecord.invoiceNumber}\n\n👤 *Customer:* ${saleRecord.customerName}\n📱 *Phone:* ${saleRecord.customerPhone}\n\n📦 *Purchased Items:*\n${itemsSummary}\n\n💰 *Subtotal:* ₹${saleRecord.subtotal.toLocaleString('en-IN')}\n🏷️ *Discount:* ₹${saleRecord.discount.toLocaleString('en-IN')}\n💵 *Total Billed:* ₹${saleRecord.totalAmount.toLocaleString('en-IN')}\n✅ *Payment Method:* ${saleRecord.paymentMethod} (${saleRecord.paymentStatus})\n\n📄 *Official Digital Receipt Link:* \n${publicUrl}`;
+
+    const waUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(text)}`;
+    window.open(waUrl, '_blank');
+
+    setToastMessage(`📲 WhatsApp message generated for +${formattedPhone}!`);
+    setTimeout(() => setToastMessage(''), 4000);
   };
 
   return (
@@ -28,14 +68,34 @@ export const SparePartInvoiceModal: React.FC<SparePartInvoiceModalProps> = ({
         <div className="px-6 py-3 bg-slate-900 text-white flex items-center justify-between no-print">
           <div className="flex items-center gap-2">
             <Wrench className="w-4 h-4 text-amber-400" />
-            <span className="text-xs font-bold">Spare Parts Sale Receipt #{saleRecord.invoiceNumber}</span>
+            <span className="text-xs font-bold font-mono text-amber-300">
+              #{saleRecord.invoiceNumber}
+            </span>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              className="px-3 py-1.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+              title="Download PDF Bill"
+            >
+              {isGeneratingPDF ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+              PDF Bill
+            </button>
+            <button
+              onClick={handleWhatsAppShare}
+              className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+              title="Share on Customer WhatsApp"
+            >
+              <Share2 className="w-3.5 h-3.5" />
+              WhatsApp Share
+            </button>
             <button
               onClick={handlePrint}
-              className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors"
+              className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-lg text-xs flex items-center gap-1.5 shadow-sm transition-colors"
             >
-              <Printer className="w-4 h-4" /> Print Receipt
+              <Printer className="w-3.5 h-3.5" /> Print
             </button>
             <button
               onClick={onClose}
@@ -46,8 +106,15 @@ export const SparePartInvoiceModal: React.FC<SparePartInvoiceModalProps> = ({
           </div>
         </div>
 
+        {toastMessage && (
+          <div className="no-print bg-amber-600 text-white text-xs px-4 py-2 flex items-center justify-between font-semibold shadow-sm">
+            <span>{toastMessage}</span>
+            <button onClick={() => setToastMessage('')} className="text-white font-bold ml-2">×</button>
+          </div>
+        )}
+
         {/* Printable Invoice Sheet */}
-        <div className="p-8 overflow-y-auto space-y-6 flex-1 bg-white printable-area">
+        <div ref={documentRef} className="p-8 overflow-y-auto space-y-6 flex-1 bg-white printable-area">
           {/* Shop Header */}
           <div className="border-b-2 border-slate-900 pb-4 flex items-start justify-between">
             <div>

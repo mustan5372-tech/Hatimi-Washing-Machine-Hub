@@ -42,6 +42,33 @@ import { PublicCustomerPortal } from './components/public/PublicCustomerPortal';
 import { SettingsView } from './components/settings/SettingsView';
 import { initFirestoreSync, onFirestoreSync } from './services/firestoreSync';
 
+const getTabFromPath = (path: string): string => {
+  const p = path.toLowerCase().replace(/\/$/, '');
+  if (p === '/spareparts/checkout') return 'spareparts-checkout';
+  if (p === '/spareparts') return 'spareparts';
+  if (p === '/inventory') return 'inventory';
+  if (p === '/purchases') return 'purchases';
+  if (p === '/sales') return 'sales';
+  if (p === '/customers') return 'customers';
+  if (p === '/reports') return 'reports';
+  if (p === '/settings') return 'settings';
+  return 'dashboard';
+};
+
+const getPathFromTab = (tab: string): string => {
+  switch (tab) {
+    case 'spareparts-checkout': return '/spareparts/checkout';
+    case 'spareparts': return '/spareparts';
+    case 'inventory': return '/inventory';
+    case 'purchases': return '/purchases';
+    case 'sales': return '/sales';
+    case 'customers': return '/customers';
+    case 'reports': return '/reports';
+    case 'settings': return '/settings';
+    default: return '/dashboard';
+  }
+};
+
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => getCurrentUser());
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
@@ -54,7 +81,16 @@ export default function App() {
     return hash.includes('#invoice=') ? hash.split('#invoice=')[1] : null;
   });
 
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>(() => getTabFromPath(window.location.pathname));
+
+  const handleNavigateTab = (tab: string) => {
+    setActiveTab(tab);
+    setSearchTerm('');
+    const targetPath = getPathFromTab(tab);
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState({}, '', targetPath);
+    }
+  };
   const [searchTerm, setSearchTerm] = useState('');
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('hatimi_theme');
@@ -220,9 +256,9 @@ export default function App() {
           if (val && activeTab !== 'inventory' && activeTab !== 'sales' && activeTab !== 'purchases' && activeTab !== 'customers') {
             const matchesCustomer = customers.some(c => c.name.toLowerCase().includes(val.toLowerCase()) || c.phone.includes(val));
             if (matchesCustomer) {
-              setActiveTab('customers');
+              handleNavigateTab('customers');
             } else {
-              setActiveTab('inventory');
+              handleNavigateTab('inventory');
             }
           }
         }}
@@ -246,10 +282,7 @@ export default function App() {
         {/* Sidebar */}
         <Sidebar
           activeTab={activeTab}
-          onTabChange={(tab) => {
-            setActiveTab(tab);
-            setSearchTerm('');
-          }}
+          onTabChange={(tab) => handleNavigateTab(tab)}
           currentUser={currentUser}
           isDarkMode={theme === 'dark'}
           onToggleDarkMode={toggleTheme}
@@ -276,7 +309,7 @@ export default function App() {
               inventory={inventory}
               sales={sales}
               purchases={purchases}
-              onNavigate={(tab) => setActiveTab(tab)}
+              onNavigate={(tab) => handleNavigateTab(tab)}
               onOpenAddMachine={() => {
                 setEditingMachine(null);
                 setIsAddMachineOpen(true);
@@ -326,8 +359,13 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'spareparts' && (
-            <SparePartsOverview settings={businessSettings} />
+          {(activeTab === 'spareparts' || activeTab === 'spareparts-checkout') && (
+            <SparePartsOverview
+              settings={businessSettings}
+              initialMode={activeTab === 'spareparts-checkout' ? 'checkout' : 'catalog'}
+              onNavigateCheckout={() => handleNavigateTab('spareparts-checkout')}
+              onNavigateCatalog={() => handleNavigateTab('spareparts')}
+            />
           )}
 
           {activeTab === 'purchases' && (
