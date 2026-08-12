@@ -21,6 +21,7 @@ import {
   INITIAL_EXPENSES,
   INITIAL_USERS
 } from './seedData';
+import { initFirebase } from './firebase';
 
 const SETTINGS_KEY = 'hwmh_settings';
 const INVENTORY_KEY = 'hwmh_inventory';
@@ -71,7 +72,20 @@ const saveData = <T>(key: string, data: T) => {
 
 // --- Settings ---
 export const getSettings = (): BusinessSettings => {
-  return loadData<BusinessSettings>(SETTINGS_KEY, INITIAL_SETTINGS);
+  const loaded = loadData<BusinessSettings>(SETTINGS_KEY, INITIAL_SETTINGS);
+  const settings = !loaded.firebaseApiKey ? { ...INITIAL_SETTINGS, ...loaded } : loaded;
+  
+  if (settings.firebaseApiKey && settings.firebaseProjectId) {
+    initFirebase({
+      apiKey: settings.firebaseApiKey,
+      authDomain: settings.firebaseAuthDomain || '',
+      projectId: settings.firebaseProjectId,
+      storageBucket: settings.firebaseStorageBucket || '',
+      messagingSenderId: settings.firebaseMessagingSenderId || '',
+      appId: settings.firebaseAppId || ''
+    });
+  }
+  return settings;
 };
 
 export const updateSettings = (settings: Partial<BusinessSettings>): BusinessSettings => {

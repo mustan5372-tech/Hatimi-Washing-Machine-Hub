@@ -11,7 +11,13 @@ export const INITIAL_SETTINGS: BusinessSettings = {
   defaultInvoiceFooter: "Thank you for shopping with Hatimi Washing Machine Hub! Quality refurbished appliances guaranteed.",
   defaultWarrantyDays: 30,
   invoicePrefix: "INV-2026-",
-  firebaseConfigured: false
+  firebaseConfigured: true,
+  firebaseApiKey: "AIzaSyAS8bc3bI3pZzTzWZ8mFZUlZ48TWymh1Ow",
+  firebaseAuthDomain: "hatimi-washing-machine-hub.firebaseapp.com",
+  firebaseProjectId: "hatimi-washing-machine-hub",
+  firebaseStorageBucket: "hatimi-washing-machine-hub.firebasestorage.app",
+  firebaseMessagingSenderId: "162513883446",
+  firebaseAppId: "1:162513883446:web:3a3d3b9ebc2fb84c7e6397"
 };
 
 export const INITIAL_USERS: UserProfile[] = [
