@@ -149,6 +149,12 @@ export interface BusinessSettings {
   defaultWarrantyDays: number;
   invoicePrefix: string;
   firebaseConfigured?: boolean;
+  firebaseApiKey?: string;
+  firebaseAuthDomain?: string;
+  firebaseProjectId?: string;
+  firebaseStorageBucket?: string;
+  firebaseMessagingSenderId?: string;
+  firebaseAppId?: string;
 }
 
 export interface AppNotification {

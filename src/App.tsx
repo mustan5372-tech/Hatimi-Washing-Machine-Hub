@@ -37,6 +37,7 @@ import { QRScannerModal } from './components/common/QRScannerModal';
 
 import { StaffLoginModal } from './components/auth/StaffLoginModal';
 import { PublicCustomerPortal } from './components/public/PublicCustomerPortal';
+import { SettingsView } from './components/settings/SettingsView';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => getCurrentUser());
@@ -64,6 +65,7 @@ export default function App() {
   const [sales, setSales] = useState(getSales());
   const [expenses, setExpenses] = useState(getExpenses());
   const [customers, setCustomers] = useState(getCustomers());
+  const [businessSettings, setBusinessSettings] = useState(getSettings());
 
   // Refresh handler
   const refreshData = () => {
@@ -349,49 +351,14 @@ export default function App() {
           )}
 
           {activeTab === 'settings' && (
-            <div className="card-panel p-6 max-w-2xl mx-auto space-y-4">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">
-                Hatimi Washing Machine Hub • Store Settings
-              </h2>
-              <div className="space-y-3 text-xs">
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Business Name</label>
-                  <input
-                    type="text"
-                    defaultValue={getSettings().shopName}
-                    readOnly
-                    className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Store Address</label>
-                  <input
-                    type="text"
-                    defaultValue={getSettings().address}
-                    readOnly
-                    className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">Primary Phone</label>
-                  <input
-                    type="text"
-                    defaultValue={getSettings().phone}
-                    readOnly
-                    className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">UPI ID for Invoices</label>
-                  <input
-                    type="text"
-                    defaultValue={getSettings().upiId}
-                    readOnly
-                    className="w-full px-3 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl font-mono text-teal-600"
-                  />
-                </div>
-              </div>
-            </div>
+            <SettingsView
+              settings={businessSettings}
+              currentUser={currentUser}
+              onUpdateSettings={(newSettings) => {
+                setBusinessSettings(newSettings);
+                refreshData();
+              }}
+            />
           )}
         </main>
       </div>
