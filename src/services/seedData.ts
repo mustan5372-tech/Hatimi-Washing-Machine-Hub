@@ -1,4 +1,4 @@
-import type { BusinessSettings, InventoryMachine, Customer, PurchaseRecord, SaleRecord, MachineExpense, UserProfile, SparePart, SparePartSaleRecord } from '../types';
+import type { BusinessSettings, InventoryMachine, Customer, PurchaseRecord, SaleRecord, MachineExpense, UserProfile, SparePart, SparePartSaleRecord, RepairRecord } from '../types';
 
 export const INITIAL_SETTINGS: BusinessSettings = {
   shopName: "Hatimi Washing Machine Hub",
@@ -34,6 +34,15 @@ export const INITIAL_USERS: UserProfile[] = [
     id: "user-mustan",
     name: "Mustansir Admin",
     email: "mustan5372@gmail.com",
+    role: "admin",
+    phone: "+91 98765 43210",
+    active: true,
+    pin: "515253"
+  },
+  {
+    id: "user-husain",
+    name: "Husain Ali",
+    email: "husainali1972@gmail.com",
     role: "admin",
     phone: "+91 98765 43210",
     active: true,
@@ -828,6 +837,41 @@ export const INITIAL_SPARE_PART_SALES: SparePartSaleRecord[] = [
     saleDate: "2026-08-08",
     notes: "Spare parts counter sale",
     createdAt: "2026-08-08T14:00:00.000Z"
+  }
+];
+
+export const INITIAL_REPAIRS: RepairRecord[] = [
+  {
+    id: "rep-1",
+    invoiceNumber: "REP-2026-0001",
+    repairDate: "2026-08-10",
+    customerName: "Imran Sheikh",
+    customerPhone: "+91 98333 44555",
+    customerAddress: "Bandra West, Mumbai",
+    machineDetails: "LG 7.0kg Semi-Automatic Washing Machine",
+    issueDescription: "Spin motor noise, drum vibration & timer rewinding service",
+    technicianName: "Mustansir Admin",
+    repairCost: 800,
+    labourCharges: 400,
+    spareParts: [
+      {
+        partId: "sp-1",
+        partNumber: "SP-0001",
+        partName: "Spin Tub Rubber Buffer Seal",
+        quantity: 1,
+        unitPrice: 250,
+        totalPrice: 250
+      }
+    ],
+    subtotal: 1450,
+    discount: 50,
+    totalAmount: 1400,
+    amountPaid: 1400,
+    balanceDue: 0,
+    paymentMethod: "UPI",
+    paymentStatus: "Paid",
+    notes: "Motor serviced and buffer replaced.",
+    createdAt: "2026-08-10T11:00:00.000Z"
   }
 ];
 

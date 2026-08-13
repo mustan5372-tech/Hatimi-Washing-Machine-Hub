@@ -233,3 +233,36 @@ export interface SparePartSaleRecord {
   createdAt: string;
 }
 
+export interface RepairSparePartItem {
+  partId?: string;
+  partNumber?: string;
+  partName: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+export interface RepairRecord {
+  id: string;
+  invoiceNumber: string; // REP-2026-0001
+  repairDate: string;
+  customerName: string;
+  customerPhone: string;
+  customerAddress?: string;
+  machineDetails: string;
+  issueDescription: string;
+  technicianName?: string;
+  repairCost: number;
+  labourCharges: number;
+  spareParts: RepairSparePartItem[];
+  subtotal: number;
+  discount: number;
+  totalAmount: number;
+  amountPaid: number;
+  balanceDue: number;
+  paymentMethod: PaymentMethod;
+  paymentStatus: PaymentStatus;
+  notes?: string;
+  createdAt: string;
+}
+

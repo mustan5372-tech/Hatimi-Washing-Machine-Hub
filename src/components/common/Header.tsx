@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Search, Bell, Sun, Moon, QrCode, PlusCircle, ShoppingBag, Shield } from 'lucide-react';
+import { Search, Bell, Sun, Moon, QrCode, PlusCircle, ShoppingBag, Shield, Languages } from 'lucide-react';
 import { Logo } from './Logo';
 import type { UserProfile, AppNotification } from '../../types';
+import { useLanguage } from '../../utils/i18n';
 
 interface HeaderProps {
   currentUser: UserProfile;
@@ -41,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const { language, setLanguage } = useLanguage();
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
@@ -101,6 +103,16 @@ export const Header: React.FC<HeaderProps> = ({
               <QrCode className="w-4 h-4 text-teal-500" />
             </button>
           </div>
+
+          {/* Language Switcher (EN / HI) */}
+          <button
+            onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
+            className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
+            title="Switch Language (English / हिंदी)"
+          >
+            <Languages className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+            <span className="font-mono">{language === 'en' ? 'EN | Hindi' : 'HI | हिंदी'}</span>
+          </button>
 
           {/* Theme Toggle (Desktop & Mobile) */}
           <button

@@ -40,12 +40,14 @@ import { BulkPurchaseModal } from './components/purchases/BulkPurchaseModal';
 import { StaffLoginModal } from './components/auth/StaffLoginModal';
 import { PublicCustomerPortal } from './components/public/PublicCustomerPortal';
 import { SettingsView } from './components/settings/SettingsView';
+import { RepairOverview } from './components/repair/RepairOverview';
 import { initFirestoreSync, onFirestoreSync } from './services/firestoreSync';
 
 const getTabFromPath = (path: string): string => {
   const p = path.toLowerCase().replace(/\/$/, '');
   if (p === '/spareparts/checkout') return 'spareparts-checkout';
   if (p === '/spareparts') return 'spareparts';
+  if (p === '/repair' || p === '/repairing') return 'repair';
   if (p === '/inventory') return 'inventory';
   if (p === '/purchases') return 'purchases';
   if (p === '/sales') return 'sales';
@@ -59,6 +61,7 @@ const getPathFromTab = (tab: string): string => {
   switch (tab) {
     case 'spareparts-checkout': return '/spareparts/checkout';
     case 'spareparts': return '/spareparts';
+    case 'repair': return '/repair';
     case 'inventory': return '/inventory';
     case 'purchases': return '/purchases';
     case 'sales': return '/sales';
@@ -366,6 +369,10 @@ export default function App() {
               onNavigateCheckout={() => handleNavigateTab('spareparts-checkout')}
               onNavigateCatalog={() => handleNavigateTab('spareparts')}
             />
+          )}
+
+          {activeTab === 'repair' && (
+            <RepairOverview settings={businessSettings} />
           )}
 
           {activeTab === 'purchases' && (

@@ -10,7 +10,13 @@ import {
   DollarSign,
   ArrowUpRight,
   Wrench,
-  CheckCircle2
+  CheckCircle2,
+  Hammer,
+  Users,
+  BarChart3,
+  Settings,
+  ShoppingCart,
+  Zap
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -25,6 +31,7 @@ import {
 } from 'recharts';
 import type { UserProfile, DashboardStats, InventoryMachine, SaleRecord, PurchaseRecord } from '../../types';
 import { StatusBadge } from '../common/StatusBadge';
+import { useLanguage } from '../../utils/i18n';
 
 interface DashboardOverviewProps {
   currentUser?: UserProfile;
@@ -66,12 +73,30 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onSelectTab,
   onRecordPayment
 }) => {
+  const { t } = useLanguage();
+  const handleNav = (tab: string) => {
+    if (onNavigate) onNavigate(tab);
+    else if (onSelectTab) onSelectTab(tab);
+  };
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
     if (hour < 17) return 'Good Afternoon';
     return 'Good Evening';
   };
+
+  const quickAccessModules = [
+    { id: 'inventory', label: t('inventory'), desc: 'Manage Stock & Prices', icon: Package, color: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20' },
+    { id: 'spareparts', label: t('spareparts'), desc: 'Parts Intake & Pricing', icon: Wrench, color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20' },
+    { id: 'spareparts-checkout', label: t('parts_checkout'), desc: 'Counter Cart Billing', icon: ShoppingCart, color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20' },
+    { id: 'repair', label: t('repair'), desc: 'Repair Cost & Labour Bills', icon: Hammer, color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20' },
+    { id: 'purchases', label: t('purchases'), desc: 'Supplier Intake & Bulk', icon: ShoppingBag, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
+    { id: 'sales', label: t('sales'), desc: 'Invoices & Customer Dues', icon: Receipt, color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' },
+    { id: 'customers', label: t('customers'), desc: 'Directory & Accounts', icon: Users, color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' },
+    { id: 'reports', label: t('reports'), desc: 'Financial Analytics & Profit', icon: BarChart3, color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' },
+    { id: 'settings', label: t('settings'), desc: 'Users & Shop Profile', icon: Settings, color: 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20' },
+  ];
 
   // Prepare chart data for last 7 days
   const last7DaysData = React.useMemo(() => {
@@ -122,21 +147,21 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             className="px-3 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
           >
             <PlusCircle className="w-4 h-4" />
-            + Buy Machine
+            {t('buy_machine')}
           </button>
           <button
             onClick={onOpenAddSale || onOpenQuickSell}
             className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
           >
             <Receipt className="w-4 h-4" />
-            + Sell Machine
+            {t('sell_machine')}
           </button>
           <button
-            onClick={() => onOpenExpenseModal && onOpenExpenseModal()}
-            className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            onClick={() => handleNav('repair')}
+            className="px-3 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
           >
-            <Wrench className="w-3.5 h-3.5 text-amber-400" />
-            + Expense
+            <Hammer className="w-3.5 h-3.5" />
+            {t('issue_repair_bill')}
           </button>
           <button
             onClick={onOpenQRScanner}
@@ -145,6 +170,40 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             <QrCode className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
             Scan QR
           </button>
+        </div>
+      </div>
+
+      {/* Quick Access All Modules Grid */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-amber-500 fill-amber-500/20" />
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              {t('quick_access')}
+            </h2>
+          </div>
+          <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">
+            {t('quick_access_sub')}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-2.5">
+          {quickAccessModules.map((mod) => {
+            const Icon = mod.icon;
+            return (
+              <button
+                key={mod.id}
+                onClick={() => handleNav(mod.id)}
+                className={`p-3 rounded-xl border flex flex-col items-center text-center justify-center transition-all hover:scale-[1.03] hover:shadow-md cursor-pointer ${mod.color} bg-white dark:bg-slate-800`}
+              >
+                <div className="p-2 rounded-lg bg-slate-100/80 dark:bg-slate-900/80 mb-1.5">
+                  <Icon className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-bold leading-tight block line-clamp-1">{mod.label}</span>
+                <span className="text-[9px] text-slate-400 mt-0.5 line-clamp-1 hidden md:block">{mod.desc}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

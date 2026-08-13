@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Package, Wrench, PlusCircle, Receipt, BarChart3, LogOut } from 'lucide-react';
+import { LayoutDashboard, Package, Wrench, Hammer, PlusCircle, Receipt, BarChart3, LogOut } from 'lucide-react';
 
 interface BottomNavProps {
   currentTab: string;
@@ -20,6 +20,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     { id: 'dashboard', label: 'Home', icon: LayoutDashboard, action: () => onSelectTab('dashboard') },
     { id: 'inventory', label: 'Stock', icon: Package, action: () => onSelectTab('inventory') },
     { id: 'spareparts', label: 'Parts', icon: Wrench, action: () => onSelectTab('spareparts') },
+    { id: 'repair', label: 'Repair', icon: Hammer, action: () => onSelectTab('repair') },
     { id: 'buy', label: 'Buy', icon: PlusCircle, isAction: true, action: onOpenQuickBuy },
     { id: 'sell', label: 'Sell', icon: Receipt, isAction: true, action: onOpenQuickSell },
     { id: 'reports', label: 'Reports', icon: BarChart3, action: () => onSelectTab('reports') },

@@ -12,7 +12,9 @@ import type {
   PaymentMethod,
   SparePart,
   SparePartSaleRecord,
-  SparePartCartItem
+  SparePartCartItem,
+  RepairRecord,
+  RepairSparePartItem
 } from '../types';
 
 import {
@@ -24,7 +26,8 @@ import {
   INITIAL_EXPENSES,
   INITIAL_USERS,
   INITIAL_SPARE_PARTS,
-  INITIAL_SPARE_PART_SALES
+  INITIAL_SPARE_PART_SALES,
+  INITIAL_REPAIRS
 } from './seedData';
 import { initFirebase } from './firebase';
 import {
@@ -45,6 +48,7 @@ const USERS_KEY = 'hwmh_users';
 const CURRENT_USER_KEY = 'hwmh_current_user';
 const SPARE_PARTS_KEY = 'hwmh_spare_parts';
 const SPARE_PART_SALES_KEY = 'hwmh_spare_part_sales';
+const REPAIRS_KEY = 'hwmh_repairs';
 
 type Listener = () => void;
 const listeners: Set<Listener> = new Set();
@@ -841,6 +845,124 @@ export const createSparePartSale = (saleData: {
   syncDocToFirestore('sparePartSales', newSpareSale.id, newSpareSale);
 
   return newSpareSale;
+};
+
+// --- Repairing & Service Records ---
+export const getRepairRecords = (): RepairRecord[] => {
+  return loadData<RepairRecord[]>(REPAIRS_KEY, INITIAL_REPAIRS);
+};
+
+export const generateNextRepairInvoiceNumber = (): string => {
+  const repairs = getRepairRecords();
+  const year = new Date().getFullYear();
+  const prefix = `REP-${year}-`;
+  
+  const existingNumbers = repairs
+    .map(r => r.invoiceNumber)
+    .filter(inv => inv && inv.startsWith(prefix))
+    .map(inv => parseInt(inv.replace(prefix, ''), 10))
+    .filter(num => !isNaN(num));
+
+  const maxNum = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+  const nextNum = maxNum + 1;
+  return `${prefix}${String(nextNum).padStart(4, '0')}`;
+};
+
+export const createRepairRecord = (repairData: {
+  customerName: string;
+  customerPhone: string;
+  customerAddress?: string;
+  machineDetails: string;
+  issueDescription: string;
+  technicianName?: string;
+  repairCost: number;
+  labourCharges: number;
+  spareParts?: RepairSparePartItem[];
+  discount: number;
+  amountPaid: number;
+  paymentMethod: PaymentMethod;
+  repairDate?: string;
+  notes?: string;
+}): RepairRecord => {
+  const sparePartsList = repairData.spareParts || [];
+  const partsSubtotal = sparePartsList.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  const subtotal = repairData.repairCost + repairData.labourCharges + partsSubtotal;
+  const totalAmount = Math.max(0, subtotal - repairData.discount);
+  const balanceDue = Math.max(0, totalAmount - repairData.amountPaid);
+  const paymentStatus = balanceDue === 0 ? 'Paid' : (repairData.amountPaid > 0 ? 'Partially Paid' : 'Unpaid');
+
+  const invoiceNumber = generateNextRepairInvoiceNumber();
+
+  // If spare parts from catalog were used, update totalSold
+  if (sparePartsList.length > 0) {
+    const catalogParts = getSpareParts();
+    sparePartsList.forEach(item => {
+      if (item.partId || item.partNumber) {
+        const pIdx = catalogParts.findIndex(p => p.id === item.partId || p.partNumber === item.partNumber);
+        if (pIdx >= 0) {
+          catalogParts[pIdx].totalSold = (catalogParts[pIdx].totalSold || 0) + item.quantity;
+          catalogParts[pIdx].updatedAt = new Date().toISOString();
+          syncDocToFirestore('spareParts', catalogParts[pIdx].id, catalogParts[pIdx]);
+        }
+      }
+    });
+    saveData(SPARE_PARTS_KEY, catalogParts);
+  }
+
+  // Update customer
+  let customers = getCustomers();
+  let customer = customers.find(c => c.phone.trim() === repairData.customerPhone.trim() || c.name.toLowerCase().trim() === repairData.customerName.toLowerCase().trim());
+  if (!customer) {
+    customer = saveCustomer({
+      name: repairData.customerName,
+      phone: repairData.customerPhone,
+      address: repairData.customerAddress
+    });
+  } else {
+    customer.address = repairData.customerAddress || customer.address;
+  }
+  customer.totalSpent += totalAmount;
+  customer.pendingAmount += balanceDue;
+  saveCustomer(customer);
+
+  const newRepair: RepairRecord = {
+    id: `rep-${Date.now()}`,
+    invoiceNumber,
+    repairDate: repairData.repairDate || new Date().toISOString().split('T')[0],
+    customerName: repairData.customerName,
+    customerPhone: repairData.customerPhone,
+    customerAddress: repairData.customerAddress,
+    machineDetails: repairData.machineDetails,
+    issueDescription: repairData.issueDescription,
+    technicianName: repairData.technicianName,
+    repairCost: repairData.repairCost,
+    labourCharges: repairData.labourCharges,
+    spareParts: sparePartsList,
+    subtotal,
+    discount: repairData.discount,
+    totalAmount,
+    amountPaid: repairData.amountPaid,
+    balanceDue,
+    paymentMethod: repairData.paymentMethod,
+    paymentStatus,
+    notes: repairData.notes,
+    createdAt: new Date().toISOString()
+  };
+
+  const repairs = getRepairRecords();
+  repairs.unshift(newRepair);
+  saveData(REPAIRS_KEY, repairs);
+
+  // Sync to Firestore
+  syncDocToFirestore('repairs', newRepair.id, newRepair);
+
+  return newRepair;
+};
+
+export const deleteRepairRecord = (id: string) => {
+  const repairs = getRepairRecords().filter(r => r.id !== id);
+  saveData(REPAIRS_KEY, repairs);
+  deleteDocFromFirestore('repairs', id);
 };
 
 // --- Notifications & Alerts ---
