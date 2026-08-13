@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Hammer, Plus, Search, Filter, Wrench, Trash2, CheckCircle2, AlertCircle, Phone, FileText } from 'lucide-react';
+import { Hammer, Plus, Search, Filter, Wrench, Trash2, CheckCircle2, AlertCircle, Phone, FileText, Pencil } from 'lucide-react';
 import type { RepairRecord, BusinessSettings } from '../../types';
 import { getRepairRecords, deleteRepairRecord } from '../../services/store';
 import { RepairFormModal } from './RepairFormModal';
@@ -15,6 +15,7 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
   const [statusFilter, setStatusFilter] = useState<'All' | 'Paid' | 'Partially Paid' | 'Unpaid'>('All');
 
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingRecord, setEditingRecord] = useState<RepairRecord | null>(null);
   const [activeInvoice, setActiveInvoice] = useState<RepairRecord | null>(null);
 
   const refreshData = () => {
@@ -66,7 +67,10 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
         </div>
 
         <button
-          onClick={() => setIsFormOpen(true)}
+          onClick={() => {
+            setEditingRecord(null);
+            setIsFormOpen(true);
+          }}
           className="px-4 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-bold text-xs shadow-md hover:shadow-cyan-600/20 flex items-center gap-2 transition-all"
         >
           <Plus className="w-4 h-4" /> Issue Repairing Bill
@@ -227,6 +231,16 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
                   <FileText className="w-4 h-4" /> View / Share Bill
                 </button>
                 <button
+                  onClick={() => {
+                    setEditingRecord(r);
+                    setIsFormOpen(true);
+                  }}
+                  className="px-3 py-2 bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 hover:bg-amber-100 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                  title="Edit Record"
+                >
+                  <Pencil className="w-4 h-4" /> Edit
+                </button>
+                <button
                   onClick={() => handleDelete(r.id, r.invoiceNumber)}
                   className="px-3 py-2 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"
                   title="Delete Bill"
@@ -276,7 +290,7 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
                     <td className="p-3">
                       <p className="font-bold text-slate-900 dark:text-white">{r.customerName}</p>
                       <p className="text-[11px] text-slate-400 font-mono flex items-center gap-1">
-                        <Phone className="w-3 h-3 text-slate-400" /> {r.customerPhone}
+                        <Phone className="w-3 h-3 text-slate-400" /> {r.customerPhone || 'N/A'}
                       </p>
                     </td>
 
@@ -329,6 +343,16 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
                           <FileText className="w-3.5 h-3.5 text-cyan-500" /> Receipt
                         </button>
                         <button
+                          onClick={() => {
+                            setEditingRecord(r);
+                            setIsFormOpen(true);
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-amber-500 rounded-lg"
+                          title="Edit Repair Record"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button
                           onClick={() => handleDelete(r.id, r.invoiceNumber)}
                           className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg"
                           title="Delete Bill"
@@ -348,10 +372,14 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
       {/* Form Modal */}
       <RepairFormModal
         isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSuccess={(newRecord) => {
+        editRecord={editingRecord}
+        onClose={() => {
+          setIsFormOpen(false);
+          setEditingRecord(null);
+        }}
+        onSuccess={(savedRecord) => {
           refreshData();
-          setActiveInvoice(newRecord);
+          setActiveInvoice(savedRecord);
         }}
       />
 

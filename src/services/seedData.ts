@@ -61,7 +61,7 @@ export const INITIAL_REPAIRS: RepairRecord[] = [
     invoiceNumber: "REP-2026-0001",
     repairDate: "2026-08-13",
     customerName: "Shri ji",
-    customerPhone: "+91 98262 47802",
+    customerPhone: "",
     customerAddress: "Main Market, Mumbai",
     machineDetails: "Samsung Semi-Automatic Washing Machine",
     issueDescription: "Dryer motor winding",

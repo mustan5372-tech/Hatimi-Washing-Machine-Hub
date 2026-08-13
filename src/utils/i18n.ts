@@ -50,7 +50,8 @@ export const translations: Record<Language, Record<string, string>> = {
     email: 'Email',
     date: 'Date',
     thank_you: 'Thank you for shopping at Hatimi Washing Machine Hub!',
-    bill_lang: 'Bill Language:'
+    bill_lang: 'Bill Language:',
+    repair_warranty: '30 Days Service & Repair Warranty Included'
   },
 
   hi: {
@@ -100,7 +101,8 @@ export const translations: Record<Language, Record<string, string>> = {
     email: 'ईमेल',
     date: 'दिनांक',
     thank_you: 'हातिमी वाशिंग मशीन हब पर भरोसा करने के लिए धन्यवाद!',
-    bill_lang: 'बिल भाषा (Language):'
+    bill_lang: 'बिल भाषा (Language):',
+    repair_warranty: '30 दिनों की सर्विस एवं रिपेयर वारंटी शामिल'
   }
 };
 

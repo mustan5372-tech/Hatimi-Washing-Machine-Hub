@@ -981,6 +981,73 @@ export const createRepairRecord = (repairData: {
   return newRepair;
 };
 
+export const updateRepairRecord = (
+  id: string,
+  repairData: Partial<{
+    customerName: string;
+    customerPhone: string;
+    customerAddress?: string;
+    machineDetails: string;
+    issueDescription: string;
+    technicianName?: string;
+    repairCost: number;
+    labourCharges: number;
+    spareParts?: RepairSparePartItem[];
+    discount: number;
+    amountPaid: number;
+    paymentMethod: PaymentMethod;
+    repairDate?: string;
+    notes?: string;
+  }>
+): RepairRecord | null => {
+  const repairs = getRepairRecords();
+  const idx = repairs.findIndex(r => r.id === id);
+  if (idx === -1) return null;
+
+  const current = repairs[idx];
+  const sparePartsList = repairData.spareParts !== undefined ? repairData.spareParts : (current.spareParts || []);
+  const partsSubtotal = sparePartsList.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+  const repairCost = repairData.repairCost !== undefined ? repairData.repairCost : current.repairCost;
+  const labourCharges = repairData.labourCharges !== undefined ? repairData.labourCharges : current.labourCharges;
+  const discount = repairData.discount !== undefined ? repairData.discount : current.discount;
+  const amountPaid = repairData.amountPaid !== undefined ? repairData.amountPaid : current.amountPaid;
+
+  const subtotal = repairCost + labourCharges + partsSubtotal;
+  const totalAmount = Math.max(0, subtotal - discount);
+  const balanceDue = Math.max(0, totalAmount - amountPaid);
+  const paymentStatus = balanceDue === 0 ? 'Paid' : (amountPaid > 0 ? 'Partially Paid' : 'Unpaid');
+
+  const updatedRecord: RepairRecord = {
+    ...current,
+    customerName: repairData.customerName !== undefined ? repairData.customerName : current.customerName,
+    customerPhone: repairData.customerPhone !== undefined ? repairData.customerPhone : current.customerPhone,
+    customerAddress: repairData.customerAddress !== undefined ? repairData.customerAddress : current.customerAddress,
+    machineDetails: repairData.machineDetails !== undefined ? repairData.machineDetails : current.machineDetails,
+    issueDescription: repairData.issueDescription !== undefined ? repairData.issueDescription : current.issueDescription,
+    technicianName: repairData.technicianName !== undefined ? repairData.technicianName : current.technicianName,
+    repairCost,
+    labourCharges,
+    spareParts: sparePartsList,
+    subtotal,
+    discount,
+    totalAmount,
+    amountPaid,
+    balanceDue,
+    paymentMethod: repairData.paymentMethod !== undefined ? repairData.paymentMethod : current.paymentMethod,
+    paymentStatus,
+    repairDate: repairData.repairDate !== undefined ? repairData.repairDate : current.repairDate,
+    notes: repairData.notes !== undefined ? repairData.notes : current.notes
+  };
+
+  repairs[idx] = updatedRecord;
+  saveData(REPAIRS_KEY, repairs);
+
+  // Sync to Firestore
+  syncDocToFirestore('repairs', updatedRecord.id, updatedRecord);
+
+  return updatedRecord;
+};
+
 export const deleteRepairRecord = (id: string) => {
   const repairs = getRepairRecords().filter(r => r.id !== id);
   saveData(REPAIRS_KEY, repairs);
@@ -1059,6 +1126,8 @@ export const getDashboardStats = (): DashboardStats => {
   const sales = getSales();
   const purchases = getPurchases();
   const expenses = getExpenses();
+  const repairs = getRepairRecords();
+  const sparePartSales = getSparePartSales();
 
   const todayStr = new Date().toISOString().split('T')[0];
   const currentMonthStr = todayStr.slice(0, 7); // YYYY-MM
@@ -1066,11 +1135,25 @@ export const getDashboardStats = (): DashboardStats => {
   // Today stats
   const todayPurchased = purchases.filter(p => p.purchaseDate === todayStr);
   const todaySales = sales.filter(s => s.saleDate === todayStr);
+  const todayRepairs = repairs.filter(r => r.repairDate === todayStr);
+  const todaySpareSales = sparePartSales.filter(sp => sp.saleDate === todayStr);
 
-  const todayRevenue = todaySales.reduce((sum, s) => sum + s.finalAmount, 0);
+  const todayMachineRevenue = todaySales.reduce((sum, s) => sum + s.finalAmount, 0);
+  const todayRepairRevenue = todayRepairs.reduce((sum, r) => sum + r.totalAmount, 0);
+  const todaySpareRevenue = todaySpareSales.reduce((sum, sp) => sum + sp.totalAmount, 0);
+
+  const todayRevenue = todayMachineRevenue + todayRepairRevenue + todaySpareRevenue;
   const todayPurchaseExpenditure = todayPurchased.reduce((sum, p) => sum + p.purchasePrice, 0);
-  const todayProfit = todaySales.reduce((sum, s) => sum + s.calculatedProfit, 0);
-  const todayPendingPayments = todaySales.reduce((sum, s) => sum + s.balanceDue, 0);
+
+  const todayMachineProfit = todaySales.reduce((sum, s) => sum + s.calculatedProfit, 0);
+  const todayRepairProfit = todayRepairRevenue;
+  const todaySpareProfit = todaySpareRevenue;
+  const todayProfit = todayMachineProfit + todayRepairProfit + todaySpareProfit;
+
+  const todayPendingPayments = 
+    todaySales.reduce((sum, s) => sum + s.balanceDue, 0) +
+    todayRepairs.reduce((sum, r) => sum + r.balanceDue, 0) +
+    todaySpareSales.reduce((sum, sp) => sum + sp.balanceDue, 0);
 
   // Overall & Monthly stats
   const availableInventory = inventory.filter(m => m.status === 'Available' || m.status === 'Reserved' || m.status === 'Under Repair' || m.status === 'Pending Inspection');
@@ -1079,14 +1162,25 @@ export const getDashboardStats = (): DashboardStats => {
   const monthlySales = sales.filter(s => s.saleDate.startsWith(currentMonthStr));
   const monthlyPurchases = purchases.filter(p => p.purchaseDate.startsWith(currentMonthStr));
   const monthlyExpenses = expenses.filter(e => e.date.startsWith(currentMonthStr));
+  const monthlyRepairs = repairs.filter(r => r.repairDate.startsWith(currentMonthStr));
+  const monthlySpareSales = sparePartSales.filter(sp => sp.saleDate.startsWith(currentMonthStr));
 
   const monthlySoldMachines = monthlySales.length;
-  const monthlyRevenue = monthlySales.reduce((sum, s) => sum + s.finalAmount, 0);
+  const monthlyMachineRevenue = monthlySales.reduce((sum, s) => sum + s.finalAmount, 0);
+  const monthlyRepairRevenue = monthlyRepairs.reduce((sum, r) => sum + r.totalAmount, 0);
+  const monthlySpareRevenue = monthlySpareSales.reduce((sum, sp) => sum + sp.totalAmount, 0);
+  const monthlyRevenue = monthlyMachineRevenue + monthlyRepairRevenue + monthlySpareRevenue;
+
   const monthlyPurchaseCost = monthlyPurchases.reduce((sum, p) => sum + p.purchasePrice, 0);
   const monthlyRepairExpenses = monthlyExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const monthlyGrossProfit = monthlySales.reduce((sum, s) => sum + s.calculatedProfit, 0);
+  
+  const monthlyMachineProfit = monthlySales.reduce((sum, s) => sum + s.calculatedProfit, 0);
+  const monthlyGrossProfit = monthlyMachineProfit + monthlyRepairRevenue + monthlySpareRevenue;
 
-  const outstandingPayments = sales.reduce((sum, s) => sum + s.balanceDue, 0);
+  const outstandingPayments = 
+    sales.reduce((sum, s) => sum + s.balanceDue, 0) +
+    repairs.reduce((sum, r) => sum + r.balanceDue, 0) +
+    sparePartSales.reduce((sum, sp) => sum + sp.balanceDue, 0);
 
   return {
     todayStockCount: availableInventory.length,

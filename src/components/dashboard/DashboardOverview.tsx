@@ -32,6 +32,7 @@ import {
 import type { UserProfile, DashboardStats, InventoryMachine, SaleRecord, PurchaseRecord } from '../../types';
 import { StatusBadge } from '../common/StatusBadge';
 import { useLanguage } from '../../utils/i18n';
+import { getRepairRecords } from '../../services/store';
 
 interface DashboardOverviewProps {
   currentUser?: UserProfile;
@@ -100,6 +101,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
   // Prepare chart data for last 7 days
   const last7DaysData = React.useMemo(() => {
+    const repairs = getRepairRecords();
     const days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -109,10 +111,16 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
       const daySales = sales.filter((s) => s.saleDate === dateStr);
       const dayPurchases = purchases.filter((p) => p.purchaseDate === dateStr);
+      const dayRepairs = repairs.filter((r: any) => r.repairDate === dateStr);
 
-      const revenue = daySales.reduce((sum, s) => sum + s.finalAmount, 0);
+      const machineRevenue = daySales.reduce((sum, s) => sum + s.finalAmount, 0);
+      const repairRevenue = dayRepairs.reduce((sum: number, r: any) => sum + r.totalAmount, 0);
+      const revenue = machineRevenue + repairRevenue;
+
       const purchaseCost = dayPurchases.reduce((sum, p) => sum + p.purchasePrice, 0);
-      const profit = daySales.reduce((sum, s) => sum + s.calculatedProfit, 0);
+
+      const machineProfit = daySales.reduce((sum, s) => sum + s.calculatedProfit, 0);
+      const profit = machineProfit + repairRevenue;
 
       days.push({
         dateLabel: dayLabel,

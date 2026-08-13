@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Printer, CheckCircle, Wrench, Share2, Download, Loader2, Hammer, Languages } from 'lucide-react';
+import { X, Printer, CheckCircle, Wrench, Share2, Download, Loader2, Hammer, Languages, ShieldCheck } from 'lucide-react';
 import type { RepairRecord, BusinessSettings } from '../../types';
 import { downloadPDF } from '../../utils/pdfGenerator';
 import { translations } from '../../utils/i18n';
@@ -268,8 +268,19 @@ export const RepairInvoiceModal: React.FC<RepairInvoiceModalProps> = ({
             </div>
           </div>
 
+          {/* 30-Day Repair Warranty Badge */}
+          <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl flex items-center justify-between text-amber-900 text-xs font-bold">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>{tBill('repair_warranty')}</span>
+            </div>
+            <span className="px-2 py-0.5 bg-amber-600 text-white text-[10px] rounded-md uppercase font-black tracking-wider shrink-0">
+              30 Days Warranty
+            </span>
+          </div>
+
           {/* Stamp / Footer Notes */}
-          <div className="pt-6 border-t border-slate-200 text-center space-y-2">
+          <div className="pt-4 border-t border-slate-200 text-center space-y-1.5">
             <p className="text-[11px] font-semibold text-slate-600">
               {tBill('thank_you')}
             </p>

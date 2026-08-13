@@ -1,18 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Wrench, Plus, Trash2, Hammer } from 'lucide-react';
-import type { PaymentMethod, RepairSparePartItem } from '../../types';
-import { createRepairRecord, getCustomers, getSpareParts } from '../../services/store';
+import type { PaymentMethod, RepairSparePartItem, RepairRecord } from '../../types';
+import { createRepairRecord, updateRepairRecord, getCustomers, getSpareParts } from '../../services/store';
 
 interface RepairFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (newRecord: any) => void;
+  onSuccess: (record: any) => void;
+  editRecord?: RepairRecord | null;
 }
 
 export const RepairFormModal: React.FC<RepairFormModalProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
+  editRecord
 }) => {
   const catalogParts = getSpareParts();
 
@@ -40,6 +42,36 @@ export const RepairFormModal: React.FC<RepairFormModalProps> = ({
   const [amountPaid, setAmountPaid] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('Cash');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (editRecord) {
+      setCustomerPhone(editRecord.customerPhone || '');
+      setCustomerName(editRecord.customerName || '');
+      setCustomerAddress(editRecord.customerAddress || '');
+      setMachineDetails(editRecord.machineDetails || '');
+      setIssueDescription(editRecord.issueDescription || '');
+      setTechnicianName(editRecord.technicianName || '');
+      setRepairCost(String(editRecord.repairCost ?? 0));
+      setLabourCharges(String(editRecord.labourCharges ?? 0));
+      setSpareParts(editRecord.spareParts || []);
+      setDiscount(String(editRecord.discount ?? 0));
+      setAmountPaid(String(editRecord.amountPaid ?? 0));
+      setPaymentMethod(editRecord.paymentMethod || 'Cash');
+    } else {
+      setCustomerPhone('');
+      setCustomerName('');
+      setCustomerAddress('');
+      setMachineDetails('');
+      setIssueDescription('');
+      setTechnicianName('');
+      setRepairCost('500');
+      setLabourCharges('300');
+      setSpareParts([]);
+      setDiscount('0');
+      setAmountPaid('');
+      setPaymentMethod('Cash');
+    }
+  }, [editRecord, isOpen]);
 
   if (!isOpen) return null;
 
@@ -109,8 +141,8 @@ export const RepairFormModal: React.FC<RepairFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerPhone.trim() || !customerName.trim()) {
-      setError('Please provide Customer Phone and Name.');
+    if (!customerName.trim()) {
+      setError('Please provide Customer Name.');
       return;
     }
     if (!machineDetails.trim() || !issueDescription.trim()) {
@@ -119,25 +151,43 @@ export const RepairFormModal: React.FC<RepairFormModalProps> = ({
     }
 
     try {
-      const record = createRepairRecord({
-        customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
-        customerAddress: customerAddress.trim(),
-        machineDetails: machineDetails.trim(),
-        issueDescription: issueDescription.trim(),
-        technicianName: technicianName.trim() || 'Hatimi Admin',
-        repairCost: numRepairCost,
-        labourCharges: numLabourCharges,
-        spareParts,
-        discount: numDiscount,
-        amountPaid: numPaid,
-        paymentMethod
-      });
+      let record;
+      if (editRecord) {
+        record = updateRepairRecord(editRecord.id, {
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          customerAddress: customerAddress.trim(),
+          machineDetails: machineDetails.trim(),
+          issueDescription: issueDescription.trim(),
+          technicianName: technicianName.trim() || 'Hatimi Admin',
+          repairCost: numRepairCost,
+          labourCharges: numLabourCharges,
+          spareParts,
+          discount: numDiscount,
+          amountPaid: numPaid,
+          paymentMethod
+        });
+      } else {
+        record = createRepairRecord({
+          customerName: customerName.trim(),
+          customerPhone: customerPhone.trim(),
+          customerAddress: customerAddress.trim(),
+          machineDetails: machineDetails.trim(),
+          issueDescription: issueDescription.trim(),
+          technicianName: technicianName.trim() || 'Hatimi Admin',
+          repairCost: numRepairCost,
+          labourCharges: numLabourCharges,
+          spareParts,
+          discount: numDiscount,
+          amountPaid: numPaid,
+          paymentMethod
+        });
+      }
 
       onSuccess(record);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to create repairing bill.');
+      setError(err.message || 'Failed to save repairing bill.');
     }
   };
 
@@ -151,8 +201,12 @@ export const RepairFormModal: React.FC<RepairFormModalProps> = ({
               <Hammer className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold">New Repairing & Service Bill</h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Issue repair charges, labour fees & optional spare parts</p>
+              <h2 className="text-base font-bold">
+                {editRecord ? 'Edit Repairing Record' : 'New Repairing & Service Bill'}
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {editRecord ? `Editing Record #${editRecord.invoiceNumber}` : 'Issue repair charges, labour fees & optional spare parts'}
+              </p>
             </div>
           </div>
           <button
@@ -177,14 +231,13 @@ export const RepairFormModal: React.FC<RepairFormModalProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  Customer Phone Number *
+                  Customer Phone Number (Optional)
                 </label>
                 <input
                   type="text"
-                  required
                   value={customerPhone}
                   onChange={(e) => handlePhoneChange(e.target.value)}
-                  placeholder="+91 98200 00000"
+                  placeholder="Optional Phone"
                   className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl font-mono font-bold"
                 />
               </div>
@@ -454,7 +507,8 @@ export const RepairFormModal: React.FC<RepairFormModalProps> = ({
             type="submit"
             className="w-full py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold shadow-lg flex items-center justify-center gap-2 transition-colors mt-2"
           >
-            <CheckCircle className="w-4 h-4" /> Issue Repairing Bill & Generate Receipt
+            <CheckCircle className="w-4 h-4" />
+            {editRecord ? 'Update Repairing Record' : 'Issue Repairing Bill & Generate Receipt'}
           </button>
         </form>
       </div>
