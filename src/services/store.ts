@@ -49,7 +49,7 @@ const CURRENT_USER_KEY = 'hwmh_current_user';
 const SPARE_PARTS_KEY = 'hwmh_spare_parts';
 const SPARE_PART_SALES_KEY = 'hwmh_spare_part_sales';
 const REPAIRS_KEY = 'hwmh_repairs';
-const CLEANUP_VERSION_KEY = 'hwmh_junk_data_cleaned_v2';
+const CLEANUP_VERSION_KEY = 'hwmh_junk_data_cleaned_v3';
 
 // Perform 1-time purge of legacy fake/junk data on load
 if (typeof window !== 'undefined' && localStorage.getItem(CLEANUP_VERSION_KEY) !== 'true') {
@@ -60,6 +60,7 @@ if (typeof window !== 'undefined' && localStorage.getItem(CLEANUP_VERSION_KEY) !
   localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(INITIAL_CUSTOMERS));
   localStorage.setItem(SALES_KEY, JSON.stringify(INITIAL_SALES));
   localStorage.setItem(EXPENSES_KEY, JSON.stringify(INITIAL_EXPENSES));
+  localStorage.setItem(SPARE_PARTS_KEY, JSON.stringify(INITIAL_SPARE_PARTS));
   localStorage.setItem(SPARE_PART_SALES_KEY, JSON.stringify(INITIAL_SPARE_PART_SALES));
   localStorage.setItem(REPAIRS_KEY, JSON.stringify(INITIAL_REPAIRS));
   localStorage.setItem(CLEANUP_VERSION_KEY, 'true');

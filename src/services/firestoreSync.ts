@@ -313,6 +313,55 @@ export const uploadLocalDataToFirestore = async () => {
 };
 
 /**
+ * Purge old fake cloud data from Firestore (one-time cloud cleanup).
+ */
+export const purgeCloudDataIfCleaned = async () => {
+  const db = getFirestore();
+  if (!db) return;
+
+  const PURGE_FLAG = 'hwmh_cloud_purged_v3';
+  if (localStorage.getItem(PURGE_FLAG) === 'true') return;
+
+  try {
+    const emptyCols: CollectionName[] = ['inventory', 'purchases', 'customers', 'sales', 'expenses', 'spareParts', 'sparePartSales'];
+    for (const colName of emptyCols) {
+      const colRef = collection(db, COLLECTIONS[colName]);
+      const snap = await getDocs(colRef);
+      const batch = writeBatch(db);
+      snap.forEach((d) => batch.delete(d.ref));
+      if (!snap.empty) await batch.commit();
+    }
+
+    // Users: Keep only user-mustan & user-husain
+    const usersRef = collection(db, COLLECTIONS.users);
+    const usersSnap = await getDocs(usersRef);
+    const usersBatch = writeBatch(db);
+    usersSnap.forEach((d) => {
+      if (d.id !== 'user-mustan' && d.id !== 'user-husain') {
+        usersBatch.delete(d.ref);
+      }
+    });
+    if (!usersSnap.empty) await usersBatch.commit();
+
+    // Repairs: Keep only rep-1 (Shri ji)
+    const repairsRef = collection(db, COLLECTIONS.repairs);
+    const repairsSnap = await getDocs(repairsRef);
+    const repairsBatch = writeBatch(db);
+    repairsSnap.forEach((d) => {
+      if (d.id !== 'rep-1') {
+        repairsBatch.delete(d.ref);
+      }
+    });
+    if (!repairsSnap.empty) await repairsBatch.commit();
+
+    localStorage.setItem(PURGE_FLAG, 'true');
+    console.log('[Firestore] ✅ Cloud database purged of legacy fake data.');
+  } catch (err) {
+    console.warn('[Firestore] Cloud purge warning:', err);
+  }
+};
+
+/**
  * Full initialization: upload local data if needed, then start listeners.
  */
 export const initFirestoreSync = async () => {
@@ -323,6 +372,9 @@ export const initFirestoreSync = async () => {
   }
 
   try {
+    // Step 0: Cloud purge of fake legacy records if needed
+    await purgeCloudDataIfCleaned();
+
     // Step 1: Upload any local data that doesn't exist in Firestore yet
     await uploadLocalDataToFirestore();
 
