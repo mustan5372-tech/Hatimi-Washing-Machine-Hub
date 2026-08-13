@@ -130,15 +130,19 @@ export const getUsers = (): UserProfile[] => {
   let merged = [...cached];
   let changed = false;
   for (const seedUser of INITIAL_USERS) {
-    const exists = merged.some(u => u.email.toLowerCase() === seedUser.email.toLowerCase());
-    if (!exists) {
+    const idx = merged.findIndex(u => u.email.toLowerCase() === seedUser.email.toLowerCase());
+    if (idx === -1) {
       merged.push(seedUser);
       changed = true;
     } else {
-      // Ensure existing seed accounts have PIN if missing
-      const idx = merged.findIndex(u => u.email.toLowerCase() === seedUser.email.toLowerCase());
-      if (idx >= 0 && !merged[idx].pin && seedUser.pin) {
-        merged[idx].pin = seedUser.pin;
+      // Ensure seed admin name, phone, and PIN stay up to date
+      if (merged[idx].name !== seedUser.name || merged[idx].phone !== seedUser.phone || (!merged[idx].pin && seedUser.pin)) {
+        merged[idx] = {
+          ...merged[idx],
+          name: seedUser.name,
+          phone: seedUser.phone,
+          pin: merged[idx].pin || seedUser.pin
+        };
         changed = true;
       }
     }

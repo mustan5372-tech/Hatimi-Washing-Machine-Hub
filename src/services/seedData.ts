@@ -32,10 +32,10 @@ export const INITIAL_USERS: UserProfile[] = [
   },
   {
     id: "user-mustan",
-    name: "Mustansir Admin",
+    name: "Mustansir Sanawadwala",
     email: "mustan5372@gmail.com",
     role: "admin",
-    phone: "+91 98765 43210",
+    phone: "+91 92387 28746",
     active: true,
     pin: "515253"
   },
@@ -44,7 +44,7 @@ export const INITIAL_USERS: UserProfile[] = [
     name: "Husain Ali",
     email: "husainali1972@gmail.com",
     role: "admin",
-    phone: "+91 98765 43210",
+    phone: "+91 98262 47802",
     active: true,
     pin: "515253"
   },
