@@ -343,17 +343,6 @@ export const purgeCloudDataIfCleaned = async () => {
     });
     if (!usersSnap.empty) await usersBatch.commit();
 
-    // Repairs: Keep rep-1 (Imran Sheikh) and rep-2 (Shri ji)
-    const repairsRef = collection(db, COLLECTIONS.repairs);
-    const repairsSnap = await getDocs(repairsRef);
-    const repairsBatch = writeBatch(db);
-    repairsSnap.forEach((d) => {
-      if (d.id !== 'rep-1' && d.id !== 'rep-2') {
-        repairsBatch.delete(d.ref);
-      }
-    });
-    if (!repairsSnap.empty) await repairsBatch.commit();
-
     localStorage.setItem(PURGE_FLAG, 'true');
     console.log('[Firestore] ✅ Cloud database purged of legacy fake data.');
   } catch (err) {
