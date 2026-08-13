@@ -38,6 +38,15 @@ export const INITIAL_USERS: UserProfile[] = [
     phone: "+91 98262 47802",
     active: true,
     pin: "515253"
+  },
+  {
+    id: "user-mufaddal",
+    name: "Mufaddal",
+    email: "mufaddalhussain5152@gmail.com",
+    role: "admin",
+    phone: "+91 98765 43210",
+    active: true,
+    pin: "515253"
   }
 ];
 

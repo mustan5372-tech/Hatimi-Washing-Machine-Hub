@@ -337,7 +337,7 @@ export const purgeCloudDataIfCleaned = async () => {
     const usersSnap = await getDocs(usersRef);
     const usersBatch = writeBatch(db);
     usersSnap.forEach((d) => {
-      if (d.id !== 'user-mustan' && d.id !== 'user-husain') {
+      if (d.id !== 'user-mustan' && d.id !== 'user-husain' && d.id !== 'user-mufaddal') {
         usersBatch.delete(d.ref);
       }
     });
