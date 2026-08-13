@@ -49,6 +49,21 @@ const CURRENT_USER_KEY = 'hwmh_current_user';
 const SPARE_PARTS_KEY = 'hwmh_spare_parts';
 const SPARE_PART_SALES_KEY = 'hwmh_spare_part_sales';
 const REPAIRS_KEY = 'hwmh_repairs';
+const CLEANUP_VERSION_KEY = 'hwmh_junk_data_cleaned_v2';
+
+// Perform 1-time purge of legacy fake/junk data on load
+if (typeof window !== 'undefined' && localStorage.getItem(CLEANUP_VERSION_KEY) !== 'true') {
+  localStorage.setItem(USERS_KEY, JSON.stringify(INITIAL_USERS));
+  localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(INITIAL_USERS[0]));
+  localStorage.setItem(INVENTORY_KEY, JSON.stringify(INITIAL_INVENTORY));
+  localStorage.setItem(PURCHASES_KEY, JSON.stringify(INITIAL_PURCHASES));
+  localStorage.setItem(CUSTOMERS_KEY, JSON.stringify(INITIAL_CUSTOMERS));
+  localStorage.setItem(SALES_KEY, JSON.stringify(INITIAL_SALES));
+  localStorage.setItem(EXPENSES_KEY, JSON.stringify(INITIAL_EXPENSES));
+  localStorage.setItem(SPARE_PART_SALES_KEY, JSON.stringify(INITIAL_SPARE_PART_SALES));
+  localStorage.setItem(REPAIRS_KEY, JSON.stringify(INITIAL_REPAIRS));
+  localStorage.setItem(CLEANUP_VERSION_KEY, 'true');
+}
 
 type Listener = () => void;
 const listeners: Set<Listener> = new Set();
@@ -126,16 +141,17 @@ export const updateSettings = (settings: Partial<BusinessSettings>): BusinessSet
 export const getUsers = (): UserProfile[] => {
   const cached = loadData<UserProfile[]>(USERS_KEY, INITIAL_USERS);
   
-  // Ensure all seed accounts always exist (handles stale browser cache)
-  let merged = [...cached];
-  let changed = false;
+  // Filter out any legacy accounts not present in current system
+  const validSeedEmails = new Set(INITIAL_USERS.map(u => u.email.toLowerCase()));
+  let merged = cached.filter(u => validSeedEmails.has(u.email.toLowerCase()));
+  let changed = merged.length !== cached.length;
+
   for (const seedUser of INITIAL_USERS) {
     const idx = merged.findIndex(u => u.email.toLowerCase() === seedUser.email.toLowerCase());
     if (idx === -1) {
       merged.push(seedUser);
       changed = true;
     } else {
-      // Ensure seed admin name, phone, and PIN stay up to date
       if (merged[idx].name !== seedUser.name || merged[idx].phone !== seedUser.phone || (!merged[idx].pin && seedUser.pin)) {
         merged[idx] = {
           ...merged[idx],
@@ -147,6 +163,7 @@ export const getUsers = (): UserProfile[] => {
       }
     }
   }
+
   if (changed) {
     saveData(USERS_KEY, merged);
   }
