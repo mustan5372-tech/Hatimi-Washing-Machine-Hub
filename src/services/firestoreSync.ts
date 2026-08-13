@@ -319,7 +319,7 @@ export const purgeCloudDataIfCleaned = async () => {
   const db = getFirestore();
   if (!db) return;
 
-  const PURGE_FLAG = 'hwmh_cloud_purged_v3';
+  const PURGE_FLAG = 'hwmh_cloud_purged_v4';
   if (localStorage.getItem(PURGE_FLAG) === 'true') return;
 
   try {
@@ -343,12 +343,12 @@ export const purgeCloudDataIfCleaned = async () => {
     });
     if (!usersSnap.empty) await usersBatch.commit();
 
-    // Repairs: Keep only rep-1 (Shri ji)
+    // Repairs: Keep rep-1 (Imran Sheikh) and rep-2 (Shri ji)
     const repairsRef = collection(db, COLLECTIONS.repairs);
     const repairsSnap = await getDocs(repairsRef);
     const repairsBatch = writeBatch(db);
     repairsSnap.forEach((d) => {
-      if (d.id !== 'rep-1') {
+      if (d.id !== 'rep-1' && d.id !== 'rep-2') {
         repairsBatch.delete(d.ref);
       }
     });

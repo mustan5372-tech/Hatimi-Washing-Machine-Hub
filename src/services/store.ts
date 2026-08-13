@@ -49,7 +49,7 @@ const CURRENT_USER_KEY = 'hwmh_current_user';
 const SPARE_PARTS_KEY = 'hwmh_spare_parts';
 const SPARE_PART_SALES_KEY = 'hwmh_spare_part_sales';
 const REPAIRS_KEY = 'hwmh_repairs';
-const CLEANUP_VERSION_KEY = 'hwmh_junk_data_cleaned_v3';
+const CLEANUP_VERSION_KEY = 'hwmh_junk_data_cleaned_v4';
 
 // Perform 1-time purge of legacy fake/junk data on load
 if (typeof window !== 'undefined' && localStorage.getItem(CLEANUP_VERSION_KEY) !== 'true') {
