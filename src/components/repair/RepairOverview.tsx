@@ -141,8 +141,106 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
         </div>
       </div>
 
-      {/* Repairs Table */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+      {/* Mobile Card List (No swiping required, prominent amounts & actions) */}
+      <div className="block md:hidden space-y-3">
+        {filtered.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
+            No repair bills found matching search query.
+          </div>
+        ) : (
+          filtered.map((r) => (
+            <div
+              key={r.id}
+              className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-3"
+            >
+              {/* Header: Customer Name & Big Amount */}
+              <div className="flex items-start justify-between gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-3">
+                <div>
+                  <h3 className="text-base font-black text-slate-900 dark:text-white leading-tight">
+                    {r.customerName}
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono flex items-center gap-1 mt-0.5">
+                    <Phone className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                    {r.customerPhone}
+                  </p>
+                </div>
+
+                <div className="text-right">
+                  <span className="text-lg font-black text-cyan-600 dark:text-cyan-400 font-mono block">
+                    ₹{r.totalAmount.toLocaleString('en-IN')}
+                  </span>
+                  {r.balanceDue > 0 ? (
+                    <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block">
+                      Due: ₹{r.balanceDue}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block">
+                      Fully Paid
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Sub-header: Invoice #, Date, Status */}
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/60 px-2 py-0.5 rounded-md">
+                    {r.invoiceNumber}
+                  </span>
+                  <span className="text-slate-400 font-mono">{r.repairDate}</span>
+                </div>
+
+                <span
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                    r.paymentStatus === 'Paid'
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
+                      : r.paymentStatus === 'Partially Paid'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                      : 'bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300'
+                  }`}
+                >
+                  {r.paymentStatus === 'Paid' ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                  {r.paymentStatus}
+                </span>
+              </div>
+
+              {/* Appliance Details */}
+              <div className="bg-slate-50 dark:bg-slate-900/60 p-2.5 rounded-xl text-xs space-y-1">
+                <p className="font-bold text-slate-800 dark:text-slate-200">{r.machineDetails}</p>
+                <p className="text-[11px] text-slate-500">{r.issueDescription}</p>
+                <div className="flex items-center justify-between pt-1 text-[10px] text-slate-400 border-t border-slate-200/50 dark:border-slate-800">
+                  <span>Repair: ₹{r.repairCost} {r.labourCharges > 0 && `+ ₹${r.labourCharges} Labour`}</span>
+                  {r.spareParts && r.spareParts.length > 0 && (
+                    <span className="text-amber-600 font-semibold flex items-center gap-0.5">
+                      <Wrench className="w-3 h-3" /> {r.spareParts.length} parts
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Quick Full-Width Action Buttons (Instant tap, zero swiping) */}
+              <div className="flex items-center gap-2 pt-1">
+                <button
+                  onClick={() => setActiveInvoice(r)}
+                  className="flex-1 py-2 bg-cyan-600 hover:bg-cyan-700 active:bg-cyan-800 text-white rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-sm transition-all"
+                >
+                  <FileText className="w-4 h-4" /> View / Share Bill
+                </button>
+                <button
+                  onClick={() => handleDelete(r.id, r.invoiceNumber)}
+                  className="px-3 py-2 bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors"
+                  title="Delete Bill"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Repairs Table (Desktop View) */}
+      <div className="hidden md:block bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>

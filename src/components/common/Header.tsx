@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Bell, Sun, Moon, QrCode, PlusCircle, ShoppingBag, Shield, Languages } from 'lucide-react';
+import { Search, Bell, Sun, Moon, Shield, Languages } from 'lucide-react';
 import { Logo } from './Logo';
 import type { UserProfile, AppNotification } from '../../types';
 import { useLanguage } from '../../utils/i18n';
@@ -36,7 +36,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   onOpenQuickBuy: _onOpenQuickBuy,
   onOpenQuickSell: _onOpenQuickSell,
-  onOpenQRScanner,
+  onOpenQRScanner: _onOpenQRScanner,
   onSelectTab: _onSelectTab,
   onSwitchRole: _onSwitchRole
 }) => {
@@ -76,73 +76,40 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2">
-          {/* Quick Action Mobile Buttons */}
-          <div className="md:hidden flex items-center gap-1.5">
-            <button
-              onClick={_onOpenQuickBuy}
-              className="p-1.5 bg-teal-600 text-white rounded-md text-xs font-medium flex items-center gap-1"
-              title="Buy Machine"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span className="hidden sm:inline">Buy</span>
-            </button>
-            <button
-              onClick={_onOpenQuickSell}
-              className="p-1.5 bg-blue-600 text-white rounded-md text-xs font-medium flex items-center gap-1"
-              title="Sell Machine"
-            >
-              <ShoppingBag className="w-4 h-4" />
-              <span className="hidden sm:inline">Sell</span>
-            </button>
-            <button
-              onClick={onOpenQRScanner}
-              className="p-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-md"
-              title="Scan QR"
-            >
-              <QrCode className="w-4 h-4 text-teal-500" />
-            </button>
-          </div>
-
+        <div className="flex items-center gap-1.5 shrink-0">
           {/* Language Switcher (EN / HI) */}
           <button
             onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')}
-            className="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors border border-slate-200 dark:border-slate-700 shadow-sm"
+            className="px-2 py-1 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors border border-slate-200 dark:border-slate-700 shadow-sm shrink-0"
             title="Switch Language (English / हिंदी)"
           >
-            <Languages className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
-            <span className="font-mono">{language === 'en' ? 'EN | Hindi' : 'HI | हिंदी'}</span>
+            <Languages className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+            <span className="font-mono text-[11px]">{language === 'en' ? 'EN' : 'HI'}</span>
           </button>
 
           {/* Theme Toggle (Desktop & Mobile) */}
           <button
             onClick={onToggleTheme || onToggleDarkMode}
-            className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1.5"
+            className="p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1 shrink-0"
             title={`Switch to ${theme === 'dark' || isDarkMode ? 'Light' : 'Dark'} Mode`}
           >
             {theme === 'dark' || isDarkMode ? (
-              <>
-                <Sun className="w-4 h-4 text-amber-400 fill-amber-400/20" />
-                <span className="hidden lg:inline text-xs font-semibold text-amber-400">Light</span>
-              </>
+              <Sun className="w-4 h-4 text-amber-400 fill-amber-400/20" />
             ) : (
-              <>
-                <Moon className="w-4 h-4 text-slate-700" />
-                <span className="hidden lg:inline text-xs font-semibold text-slate-700">Dark</span>
-              </>
+              <Moon className="w-4 h-4 text-slate-700 dark:text-slate-300" />
             )}
           </button>
 
           {/* Notification Bell Dropdown */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative"
+              className="p-1.5 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg relative"
               title="Notifications"
             >
-              <Bell className="w-4 h-4 md:w-5 md:h-5" />
+              <Bell className="w-4 h-4" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
+                <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900" />
               )}
             </button>
 
