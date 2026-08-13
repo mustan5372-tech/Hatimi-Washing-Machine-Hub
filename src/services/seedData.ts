@@ -47,6 +47,15 @@ export const INITIAL_USERS: UserProfile[] = [
     phone: "+91 98765 43210",
     active: true,
     pin: "515253"
+  },
+  {
+    id: "user-sunil",
+    name: "Sunil Piple",
+    email: "sunilpiple8@gmail.com",
+    role: "staff",
+    phone: "+91 98765 00000",
+    active: true,
+    pin: "012345"
   }
 ];
 

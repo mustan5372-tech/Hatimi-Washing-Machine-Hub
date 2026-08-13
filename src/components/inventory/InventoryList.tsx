@@ -26,7 +26,7 @@ interface InventoryListProps {
 
 export const InventoryList: React.FC<InventoryListProps> = ({
   inventory,
-  currentUser: _currentUser,
+  currentUser,
   searchTerm,
   onSearchChange,
   onOpenAddMachine,
@@ -37,6 +37,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
   onOpenExpenseModal: _onOpenExpenseModal,
   onOpenSellModal
 }) => {
+  const isStaff = currentUser?.role === 'staff';
   const [selectedBrand, setSelectedBrand] = useState('All');
   const [selectedType, setSelectedType] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
@@ -307,7 +308,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                     </td>
 
                     <td className="font-semibold text-xs text-slate-900 dark:text-white">
-                      ₹{m.totalCost.toLocaleString('en-IN')}
+                      {isStaff ? 'Restricted' : `₹${m.totalCost.toLocaleString('en-IN')}`}
                     </td>
 
                     <td className="font-bold text-xs text-emerald-600 dark:text-emerald-400">
@@ -315,10 +316,16 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                     </td>
 
                     <td>
-                      <div className="text-xs font-bold text-slate-900 dark:text-white">
-                        ₹{profit.toLocaleString('en-IN')}
-                      </div>
-                      <span className="text-[10px] text-teal-600 font-semibold">{margin}% margin</span>
+                      {isStaff ? (
+                        <span className="text-xs font-medium text-slate-400">Restricted</span>
+                      ) : (
+                        <>
+                          <div className="text-xs font-bold text-slate-900 dark:text-white">
+                            ₹{profit.toLocaleString('en-IN')}
+                          </div>
+                          <span className="text-[10px] text-teal-600 font-semibold">{margin}% margin</span>
+                        </>
+                      )}
                     </td>
 
                     <td>
@@ -396,7 +403,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                 <div className="grid grid-cols-3 gap-2 py-2 border-y border-slate-100 dark:border-slate-800 text-xs">
                   <div>
                     <span className="text-[10px] text-slate-400 block">Total Cost</span>
-                    <span className="font-semibold text-slate-900 dark:text-white">₹{m.totalCost.toLocaleString('en-IN')}</span>
+                    <span className="font-semibold text-slate-900 dark:text-white">{isStaff ? 'Restricted' : `₹${m.totalCost.toLocaleString('en-IN')}`}</span>
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block">Selling Price</span>
@@ -404,7 +411,7 @@ export const InventoryList: React.FC<InventoryListProps> = ({
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-400 block">Profit</span>
-                    <span className="font-bold text-slate-900 dark:text-white">₹{profit.toLocaleString('en-IN')}</span>
+                    <span className="font-bold text-slate-900 dark:text-white">{isStaff ? 'Restricted' : `₹${profit.toLocaleString('en-IN')}`}</span>
                   </div>
                 </div>
 

@@ -16,7 +16,8 @@ import {
   BarChart3,
   Settings,
   ShoppingCart,
-  Zap
+  Zap,
+  Lock
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -75,6 +76,8 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onRecordPayment
 }) => {
   const { t } = useLanguage();
+  const isStaff = currentUser?.role === 'staff';
+
   const handleNav = (tab: string) => {
     if (onNavigate) onNavigate(tab);
     else if (onSelectTab) onSelectTab(tab);
@@ -95,7 +98,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
     { id: 'purchases', label: t('purchases'), desc: 'Supplier Intake & Bulk', icon: ShoppingBag, color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20' },
     { id: 'sales', label: t('sales'), desc: 'Invoices & Customer Dues', icon: Receipt, color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20' },
     { id: 'customers', label: t('customers'), desc: 'Directory & Accounts', icon: Users, color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20' },
-    { id: 'reports', label: t('reports'), desc: 'Financial Analytics & Profit', icon: BarChart3, color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' },
+    ...(!isStaff ? [{ id: 'reports', label: t('reports'), desc: 'Financial Analytics & Profit', icon: BarChart3, color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20' }] : []),
     { id: 'settings', label: t('settings'), desc: 'Users & Shop Profile', icon: Settings, color: 'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/20' },
   ];
 
@@ -259,7 +262,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               {stats.todaySoldCount} <span className="text-xs font-normal text-slate-400">units</span>
             </div>
             <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
-              Rev: ₹{stats.todayRevenue.toLocaleString('en-IN')}
+              {isStaff ? 'Daily Sales Units' : `Rev: ₹${stats.todayRevenue.toLocaleString('en-IN')}`}
             </div>
           </div>
 
@@ -270,10 +273,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <TrendingUp className="w-4 h-4 text-emerald-500" />
             </div>
             <div className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-              ₹{stats.todayProfit.toLocaleString('en-IN')}
+              {isStaff ? 'Restricted' : `₹${stats.todayProfit.toLocaleString('en-IN')}`}
             </div>
             <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-              Net gross margin
+              {isStaff ? 'Staff Account' : 'Net gross margin'}
             </div>
           </div>
 
@@ -298,10 +301,10 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
               <DollarSign className="w-4 h-4 text-teal-600 dark:text-teal-400" />
             </div>
             <div className="text-xl font-bold text-slate-900 dark:text-white mt-1">
-              ₹{stats.totalInventoryValue.toLocaleString('en-IN')}
+              {isStaff ? 'Restricted' : `₹${stats.totalInventoryValue.toLocaleString('en-IN')}`}
             </div>
             <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-              Total acquisition cost
+              {isStaff ? 'Staff Account' : 'Total acquisition cost'}
             </div>
           </div>
         </div>
@@ -313,12 +316,14 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             This Month Overview ({new Date().toLocaleString('default', { month: 'long', year: 'numeric' })})
           </h2>
-          <button
-            onClick={() => onNavigate ? onNavigate('reports') : onSelectTab && onSelectTab('reports')}
-            className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-0.5"
-          >
-            Detailed Reports <ArrowUpRight className="w-3.5 h-3.5" />
-          </button>
+          {!isStaff && (
+            <button
+              onClick={() => onNavigate ? onNavigate('reports') : onSelectTab && onSelectTab('reports')}
+              className="text-xs font-semibold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-0.5"
+            >
+              Detailed Reports <ArrowUpRight className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
@@ -328,25 +333,36 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
           <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
             <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">Monthly Revenue</span>
-            <span className="text-lg font-bold text-slate-900 dark:text-white">₹{stats.monthlyRevenue.toLocaleString('en-IN')}</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white">{isStaff ? 'Restricted' : `₹${stats.monthlyRevenue.toLocaleString('en-IN')}`}</span>
           </div>
           <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
             <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">Purchases Cost</span>
-            <span className="text-lg font-bold text-slate-900 dark:text-white">₹{stats.monthlyPurchaseCost.toLocaleString('en-IN')}</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white">{isStaff ? 'Restricted' : `₹${stats.monthlyPurchaseCost.toLocaleString('en-IN')}`}</span>
           </div>
           <div className="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
             <span className="text-[11px] text-slate-500 dark:text-slate-400 block font-medium">Repair Expenses</span>
-            <span className="text-lg font-bold text-slate-900 dark:text-white">₹{stats.monthlyRepairExpenses.toLocaleString('en-IN')}</span>
+            <span className="text-lg font-bold text-slate-900 dark:text-white">{isStaff ? 'Restricted' : `₹${stats.monthlyRepairExpenses.toLocaleString('en-IN')}`}</span>
           </div>
           <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-lg border border-emerald-200 dark:border-emerald-800 col-span-2 md:col-span-1">
             <span className="text-[11px] text-emerald-800 dark:text-emerald-300 block font-semibold">Gross Profit</span>
-            <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">₹{stats.monthlyGrossProfit.toLocaleString('en-IN')}</span>
+            <span className="text-lg font-bold text-emerald-700 dark:text-emerald-300">{isStaff ? 'Restricted' : `₹${stats.monthlyGrossProfit.toLocaleString('en-IN')}`}</span>
           </div>
         </div>
       </div>
 
       {/* Main Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {isStaff ? (
+        <div className="card-panel p-6 text-center bg-slate-50/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl space-y-2">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto border border-amber-500/20">
+            <Lock className="w-6 h-6" />
+          </div>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white">Revenue & Profit Analysis Turned Off</h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            Financial analytics charts, revenue totals, and profit margin breakdowns are disabled for Staff accounts.
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Revenue & Profit Graph */}
         <div className="card-panel p-4">
           <div className="flex items-center justify-between mb-4">
@@ -409,6 +425,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
           </div>
         </div>
       </div>
+      )}
 
       {/* Operational Widgets Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -560,9 +577,11 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
                   <span className="text-xs font-bold text-slate-900 dark:text-white">
                     ₹{s.finalAmount.toLocaleString('en-IN')}
                   </span>
-                  <span className="block text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                    Profit: ₹{s.calculatedProfit.toLocaleString('en-IN')}
-                  </span>
+                  {!isStaff && (
+                    <span className="block text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                      Profit: ₹{s.calculatedProfit.toLocaleString('en-IN')}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}

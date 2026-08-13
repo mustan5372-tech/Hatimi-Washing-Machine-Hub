@@ -199,46 +199,58 @@ export const MachineDetailPage: React.FC<MachineDetailPageProps> = ({
               </div>
 
               {/* Financial Costs & Profitability Box */}
-              <div className="card-panel p-4 bg-teal-50/40 dark:bg-teal-950/20 border-teal-200 dark:border-teal-900">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-teal-800 dark:text-teal-300">
-                    Financial Cost & Profit Breakdown
-                  </h3>
-                  <span className="px-2 py-0.5 bg-teal-600 text-white rounded text-[11px] font-bold">
-                    {marginPct}% Profit Margin
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Purchase Price</span>
-                    <span className="font-bold text-slate-900 dark:text-white">₹{machine.purchasePrice.toLocaleString('en-IN')}</span>
+              {currentUser.role === 'staff' ? (
+                <div className="card-panel p-4 bg-slate-50/60 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-xs">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Selling Price</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400 text-base">₹{machine.sellingPrice.toLocaleString('en-IN')}</span>
+                    </div>
+                    <span className="text-[11px] text-slate-400 font-medium italic">Purchase cost & profit details are restricted for Staff</span>
                   </div>
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Repairs & Transport</span>
-                    <span className="font-bold text-rose-600 dark:text-rose-400">
-                      +₹{(machine.repairExpenses + machine.cleaningExpenses + machine.transportExpenses + machine.otherExpenses).toLocaleString('en-IN')}
+                </div>
+              ) : (
+                <div className="card-panel p-4 bg-teal-50/40 dark:bg-teal-950/20 border-teal-200 dark:border-teal-900">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-teal-800 dark:text-teal-300">
+                      Financial Cost & Profit Breakdown
+                    </h3>
+                    <span className="px-2 py-0.5 bg-teal-600 text-white rounded text-[11px] font-bold">
+                      {marginPct}% Profit Margin
                     </span>
                   </div>
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Total Acquisition Cost</span>
-                    <span className="font-black text-slate-900 dark:text-white">₹{machine.totalCost.toLocaleString('en-IN')}</span>
-                  </div>
-                  <div>
-                    <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Selling Price</span>
-                    <span className="font-black text-emerald-600 dark:text-emerald-400">₹{machine.sellingPrice.toLocaleString('en-IN')}</span>
-                  </div>
-                </div>
 
-                <div className="mt-3 pt-2 border-t border-teal-200 dark:border-teal-900/60 flex items-center justify-between text-xs font-bold">
-                  <span className="text-slate-700 dark:text-slate-300">
-                    {machine.status === 'Sold' ? 'Realized Net Profit:' : 'Expected Net Profit:'}
-                  </span>
-                  <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
-                    ₹{expectedProfit.toLocaleString('en-IN')}
-                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Purchase Price</span>
+                      <span className="font-bold text-slate-900 dark:text-white">₹{machine.purchasePrice.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Repairs & Transport</span>
+                      <span className="font-bold text-rose-600 dark:text-rose-400">
+                        +₹{(machine.repairExpenses + machine.cleaningExpenses + machine.transportExpenses + machine.otherExpenses).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Total Acquisition Cost</span>
+                      <span className="font-black text-slate-900 dark:text-white">₹{machine.totalCost.toLocaleString('en-IN')}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-500 dark:text-slate-400 block text-[10px]">Selling Price</span>
+                      <span className="font-black text-emerald-600 dark:text-emerald-400">₹{machine.sellingPrice.toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-teal-200 dark:border-teal-900/60 flex items-center justify-between text-xs font-bold">
+                    <span className="text-slate-700 dark:text-slate-300">
+                      {machine.status === 'Sold' ? 'Realized Net Profit:' : 'Expected Net Profit:'}
+                    </span>
+                    <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                      ₹{expectedProfit.toLocaleString('en-IN')}
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 

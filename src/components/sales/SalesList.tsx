@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Receipt, PlusCircle, Search, Eye, DollarSign, TrendingUp } from 'lucide-react';
-import type { SaleRecord } from '../../types';
+import type { SaleRecord, UserProfile } from '../../types';
 import { StatusBadge } from '../common/StatusBadge';
 
 interface SalesListProps {
   sales: SaleRecord[];
+  currentUser?: UserProfile;
   searchTerm?: string;
   onSearchChange?: (val: string) => void;
   onOpenAddSale?: () => void;
@@ -15,11 +16,13 @@ interface SalesListProps {
 
 export const SalesList: React.FC<SalesListProps> = ({
   sales,
+  currentUser,
   onOpenAddSale,
   onOpenNewSale,
   onSelectSale,
   onRecordPayment
 }) => {
+  const isStaff = currentUser?.role === 'staff';
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
 
@@ -77,7 +80,9 @@ export const SalesList: React.FC<SalesListProps> = ({
         <div className="card-panel p-3.5 flex items-center justify-between">
           <div>
             <span className="text-xs text-slate-400 block font-medium">Total Realized Net Profit</span>
-            <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">₹{totalProfit.toLocaleString('en-IN')}</span>
+            <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+              {isStaff ? 'Restricted' : `₹${totalProfit.toLocaleString('en-IN')}`}
+            </span>
           </div>
           <TrendingUp className="w-6 h-6 text-emerald-500 opacity-80" />
         </div>
@@ -174,10 +179,16 @@ export const SalesList: React.FC<SalesListProps> = ({
                     </span>
                   </td>
                   <td>
-                    <span className="font-bold text-xs text-emerald-600 dark:text-emerald-400">
-                      ₹{s.calculatedProfit.toLocaleString('en-IN')}
-                    </span>
-                    <span className="block text-[10px] text-slate-400">{s.profitMarginPct}% margin</span>
+                    {isStaff ? (
+                      <span className="text-xs font-medium text-slate-400">Restricted</span>
+                    ) : (
+                      <>
+                        <span className="font-bold text-xs text-emerald-600 dark:text-emerald-400">
+                          ₹{s.calculatedProfit.toLocaleString('en-IN')}
+                        </span>
+                        <span className="block text-[10px] text-slate-400">{s.profitMarginPct}% margin</span>
+                      </>
+                    )}
                   </td>
                   <td>
                     <StatusBadge status={s.paymentStatus} size="sm" />
@@ -234,7 +245,7 @@ export const SalesList: React.FC<SalesListProps> = ({
               </div>
               <div>
                 <span className="text-[10px] text-slate-400 block">Profit</span>
-                <span className="font-bold text-emerald-600">₹{s.calculatedProfit.toLocaleString('en-IN')}</span>
+                <span className="font-bold text-emerald-600">{isStaff ? 'Restricted' : `₹${s.calculatedProfit.toLocaleString('en-IN')}`}</span>
               </div>
             </div>
 

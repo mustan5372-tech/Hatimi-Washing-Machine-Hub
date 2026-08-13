@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ShieldAlert } from 'lucide-react';
 import type { UserProfile, InventoryMachine, PurchaseRecord, SaleRecord } from './types';
 import {
   getInventory,
@@ -308,6 +309,7 @@ export default function App() {
         <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 pb-20 md:pb-6">
           {activeTab === 'dashboard' && (
             <DashboardOverview
+              currentUser={currentUser}
               stats={stats}
               inventory={inventory}
               sales={sales}
@@ -389,6 +391,7 @@ export default function App() {
           {activeTab === 'sales' && (
             <SalesList
               sales={sales}
+              currentUser={currentUser}
               searchTerm={searchTerm}
               onSearchChange={setSearchTerm}
               onOpenAddSale={() => {
@@ -412,12 +415,24 @@ export default function App() {
           )}
 
           {activeTab === 'reports' && (
-            <ReportsOverview
-              sales={sales}
-              purchases={purchases}
-              inventory={inventory}
-              expenses={expenses}
-            />
+            currentUser.role === 'staff' ? (
+              <div className="p-8 text-center bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 my-8 max-w-lg mx-auto shadow-xl space-y-3">
+                <div className="w-16 h-16 rounded-2xl bg-rose-500/10 text-rose-500 flex items-center justify-center mx-auto border border-rose-500/20 shadow-inner font-bold">
+                  <ShieldAlert className="w-8 h-8" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Access Restricted</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Financial Analytics & Profit Reports are turned off for Staff accounts. Please sign in as an Administrator to view business profit reports.
+                </p>
+              </div>
+            ) : (
+              <ReportsOverview
+                sales={sales}
+                purchases={purchases}
+                inventory={inventory}
+                expenses={expenses}
+              />
+            )
           )}
 
           {activeTab === 'settings' && (

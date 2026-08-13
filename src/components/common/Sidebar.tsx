@@ -51,6 +51,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const active = activeTab || currentTab || 'dashboard';
   const handleTab = onTabChange || onSelectTab || (() => {});
+  const isStaff = currentUser?.role === 'staff';
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', label: 'Inventory Stock', icon: Package },
@@ -59,7 +60,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     { id: 'purchases', label: 'Purchases (Buy)', icon: ShoppingBag },
     { id: 'sales', label: 'Sales & Billing', icon: Receipt },
     { id: 'customers', label: 'Customers', icon: Users },
-    { id: 'reports', label: 'Reports & Profit', icon: BarChart3 },
+    ...(!isStaff ? [{ id: 'reports', label: 'Reports & Profit', icon: BarChart3 }] : []),
     { id: 'settings', label: 'Shop Settings', icon: Settings },
   ];
 
