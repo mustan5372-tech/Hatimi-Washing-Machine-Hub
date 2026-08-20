@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
-import { Hammer, Plus, Search, Filter, Wrench, Trash2, CheckCircle2, AlertCircle, Phone, FileText, Pencil } from 'lucide-react';
-import type { RepairRecord, BusinessSettings } from '../../types';
-import { getRepairRecords, deleteRepairRecord } from '../../services/store';
+import { Hammer, Plus, Search, Filter, Wrench, Trash2, CheckCircle2, AlertCircle, Phone, FileText, Pencil, ShieldCheck, User } from 'lucide-react';
+import type { RepairRecord, BusinessSettings, UserProfile } from '../../types';
+import { getRepairRecords, deleteRepairRecord, getCurrentUser } from '../../services/store';
 import { RepairFormModal } from './RepairFormModal';
 import { RepairInvoiceModal } from './RepairInvoiceModal';
 
 interface RepairOverviewProps {
   settings: BusinessSettings;
+  currentUser?: UserProfile;
 }
 
-export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
+export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings, currentUser }) => {
+  const activeUser = currentUser || getCurrentUser();
+  const userEmail = (activeUser?.email || '').toLowerCase();
+  const isSuperAdmin = userEmail === 'mustan5372@gmail.com';
+
   const [repairs, setRepairs] = useState<RepairRecord[]>(getRepairRecords());
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'All' | 'Paid' | 'Partially Paid' | 'Unpaid'>('All');
@@ -29,24 +34,33 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
     }
   };
 
-  // Filter logic
-  const filtered = repairs.filter((r) => {
+  // Permission Filter: mustan5372@gmail.com views ALL repair billings, remaining accounts view ONLY their own
+  const userVisibleRepairs = repairs.filter((r) => {
+    if (isSuperAdmin) return true;
+    const rEmail = (r.createdByEmail || '').toLowerCase();
+    const rUser = r.createdBy;
+    return (rEmail && rEmail === userEmail) || (rUser && rUser === activeUser.id);
+  });
+
+  // Search & Status Filter logic
+  const filtered = userVisibleRepairs.filter((r) => {
     const matchesSearch =
       r.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       r.customerPhone.includes(searchQuery) ||
       r.machineDetails.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.issueDescription.toLowerCase().includes(searchQuery.toLowerCase());
+      r.issueDescription.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (isSuperAdmin && (r.createdByName?.toLowerCase().includes(searchQuery.toLowerCase()) || r.createdByEmail?.toLowerCase().includes(searchQuery.toLowerCase())));
 
     const matchesStatus = statusFilter === 'All' || r.paymentStatus === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  // KPI calculations
-  const totalRepairsCount = repairs.length;
-  const totalRevenue = repairs.reduce((sum, r) => sum + r.totalAmount, 0);
-  const totalLabour = repairs.reduce((sum, r) => sum + r.labourCharges, 0);
-  const pendingBalance = repairs.reduce((sum, r) => sum + r.balanceDue, 0);
+  // KPI calculations based on visible repairs
+  const totalRepairsCount = userVisibleRepairs.length;
+  const totalRevenue = userVisibleRepairs.reduce((sum, r) => sum + r.totalAmount, 0);
+  const totalLabour = userVisibleRepairs.reduce((sum, r) => sum + r.labourCharges, 0);
+  const pendingBalance = userVisibleRepairs.reduce((sum, r) => sum + r.balanceDue, 0);
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
@@ -76,6 +90,19 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
           <Plus className="w-4 h-4" /> Issue Repairing Bill
         </button>
       </div>
+
+      {/* Account Visibility Banner */}
+      {isSuperAdmin ? (
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 rounded-xl text-xs font-semibold border border-indigo-200 dark:border-indigo-800">
+          <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
+          <span><strong>Super Admin Mode (mustan5372@gmail.com):</strong> You are viewing all repair billings created by all accounts.</span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-cyan-50 dark:bg-cyan-950/40 text-cyan-700 dark:text-cyan-300 rounded-xl text-xs font-semibold border border-cyan-200 dark:border-cyan-800">
+          <User className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
+          <span><strong>Personal Account View ({activeUser.email}):</strong> Displaying repair billings created by your account.</span>
+        </div>
+      )}
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -122,7 +149,7 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
           <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
           <input
             type="text"
-            placeholder="Search invoice, customer, machine..."
+            placeholder={isSuperAdmin ? "Search invoice, customer, creator..." : "Search invoice, customer, machine..."}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs"
@@ -145,7 +172,7 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
         </div>
       </div>
 
-      {/* Mobile Card List (No swiping required, prominent amounts & actions) */}
+      {/* Mobile Card List */}
       <div className="block md:hidden space-y-3">
         {filtered.length === 0 ? (
           <div className="p-8 text-center text-slate-400 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
@@ -165,7 +192,7 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
                   </h3>
                   <p className="text-xs text-slate-500 font-mono flex items-center gap-1 mt-0.5">
                     <Phone className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-                    {r.customerPhone}
+                    {r.customerPhone || 'N/A'}
                   </p>
                 </div>
 
@@ -185,13 +212,18 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
                 </div>
               </div>
 
-              {/* Sub-header: Invoice #, Date, Status */}
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
+              {/* Sub-header: Invoice #, Date, Creator tag, Status */}
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-mono font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-50 dark:bg-cyan-950/60 px-2 py-0.5 rounded-md">
                     {r.invoiceNumber}
                   </span>
                   <span className="text-slate-400 font-mono">{r.repairDate}</span>
+                  {isSuperAdmin && (
+                    <span className="text-[10px] font-medium bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700">
+                      By: {r.createdByName || r.createdByEmail || 'Admin'}
+                    </span>
+                  )}
                 </div>
 
                 <span
@@ -222,7 +254,7 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
                 </div>
               </div>
 
-              {/* Quick Full-Width Action Buttons (Instant tap, zero swiping) */}
+              {/* Quick Action Buttons */}
               <div className="flex items-center gap-2 pt-1">
                 <button
                   onClick={() => setActiveInvoice(r)}
@@ -263,6 +295,7 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
                 <th className="p-3">Date</th>
                 <th className="p-3">Customer</th>
                 <th className="p-3">Appliance & Service</th>
+                {isSuperAdmin && <th className="p-3">Issued By</th>}
                 <th className="p-3 text-right">Labour & Repair</th>
                 <th className="p-3 text-right">Total Amount</th>
                 <th className="p-3 text-center">Status</th>
@@ -272,7 +305,7 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-slate-400">
+                  <td colSpan={isSuperAdmin ? 9 : 8} className="p-8 text-center text-slate-400">
                     No repair bills found matching search query.
                   </td>
                 </tr>
@@ -303,6 +336,15 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
                         </span>
                       )}
                     </td>
+
+                    {isSuperAdmin && (
+                      <td className="p-3">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 rounded-md font-semibold text-[11px] border border-slate-200 dark:border-slate-700">
+                          <User className="w-3 h-3 text-cyan-500" />
+                          {r.createdByName || r.createdByEmail || 'Admin'}
+                        </span>
+                      </td>
+                    )}
 
                     <td className="p-3 text-right font-mono">
                       <span className="text-slate-600 dark:text-slate-400">₹{r.repairCost}</span>
@@ -373,6 +415,7 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
       <RepairFormModal
         isOpen={isFormOpen}
         editRecord={editingRecord}
+        currentUser={activeUser}
         onClose={() => {
           setIsFormOpen(false);
           setEditingRecord(null);
@@ -393,3 +436,4 @@ export const RepairOverview: React.FC<RepairOverviewProps> = ({ settings }) => {
     </div>
   );
 };
+

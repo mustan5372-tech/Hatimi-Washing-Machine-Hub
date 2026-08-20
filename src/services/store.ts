@@ -871,7 +871,24 @@ export const createSparePartSale = (saleData: {
 
 // --- Repairing & Service Records ---
 export const getRepairRecords = (): RepairRecord[] => {
-  return loadData<RepairRecord[]>(REPAIRS_KEY, INITIAL_REPAIRS);
+  const records = loadData<RepairRecord[]>(REPAIRS_KEY, INITIAL_REPAIRS);
+  let updated = false;
+  const processed = records.map(r => {
+    if (!r.createdByEmail) {
+      updated = true;
+      return {
+        ...r,
+        createdBy: r.createdBy || 'user-mustan',
+        createdByEmail: r.createdByEmail || 'mustan5372@gmail.com',
+        createdByName: r.createdByName || r.technicianName || 'Mustansir Sanawadwala'
+      };
+    }
+    return r;
+  });
+  if (updated) {
+    saveData(REPAIRS_KEY, processed);
+  }
+  return processed;
 };
 
 export const generateNextRepairInvoiceNumber = (): string => {
@@ -905,6 +922,9 @@ export const createRepairRecord = (repairData: {
   paymentMethod: PaymentMethod;
   repairDate?: string;
   notes?: string;
+  createdBy?: string;
+  createdByEmail?: string;
+  createdByName?: string;
 }): RepairRecord => {
   const sparePartsList = repairData.spareParts || [];
   const partsSubtotal = sparePartsList.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
@@ -947,6 +967,11 @@ export const createRepairRecord = (repairData: {
   customer.pendingAmount += balanceDue;
   saveCustomer(customer);
 
+  const activeUser = getCurrentUser();
+  const createdBy = repairData.createdBy || activeUser.id;
+  const createdByEmail = repairData.createdByEmail || activeUser.email || 'mustan5372@gmail.com';
+  const createdByName = repairData.createdByName || activeUser.name || 'Hatimi Admin';
+
   const newRepair: RepairRecord = {
     id: `rep-${Date.now()}`,
     invoiceNumber,
@@ -968,7 +993,10 @@ export const createRepairRecord = (repairData: {
     paymentMethod: repairData.paymentMethod,
     paymentStatus,
     notes: repairData.notes,
-    createdAt: new Date().toISOString()
+    createdAt: new Date().toISOString(),
+    createdBy,
+    createdByEmail,
+    createdByName
   };
 
   const repairs = getRepairRecords();

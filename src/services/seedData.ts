@@ -95,6 +95,9 @@ export const INITIAL_REPAIRS: RepairRecord[] = [
     paymentMethod: "Cash",
     paymentStatus: "Paid",
     notes: "Dryer motor winding service",
-    createdAt: "2026-08-13T04:00:00.000Z"
+    createdAt: "2026-08-13T04:00:00.000Z",
+    createdBy: "user-mustan",
+    createdByEmail: "mustan5372@gmail.com",
+    createdByName: "Mustansir Sanawadwala"
   }
 ];

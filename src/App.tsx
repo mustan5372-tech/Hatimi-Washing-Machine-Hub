@@ -374,7 +374,7 @@ export default function App() {
           )}
 
           {activeTab === 'repair' && (
-            <RepairOverview settings={businessSettings} />
+            <RepairOverview settings={businessSettings} currentUser={currentUser} />
           )}
 
           {activeTab === 'purchases' && (

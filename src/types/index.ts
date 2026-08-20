@@ -264,5 +264,8 @@ export interface RepairRecord {
   paymentStatus: PaymentStatus;
   notes?: string;
   createdAt: string;
+  createdBy?: string;
+  createdByEmail?: string;
+  createdByName?: string;
 }
 

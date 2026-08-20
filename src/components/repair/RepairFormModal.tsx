@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, CheckCircle, Wrench, Plus, Trash2, Hammer } from 'lucide-react';
-import type { PaymentMethod, RepairSparePartItem, RepairRecord } from '../../types';
+import type { PaymentMethod, RepairSparePartItem, RepairRecord, UserProfile } from '../../types';
 import { createRepairRecord, updateRepairRecord, getCustomers, getSpareParts } from '../../services/store';
 
 interface RepairFormModalProps {
@@ -8,13 +8,15 @@ interface RepairFormModalProps {
   onClose: () => void;
   onSuccess: (record: any) => void;
   editRecord?: RepairRecord | null;
+  currentUser?: UserProfile;
 }
 
 export const RepairFormModal: React.FC<RepairFormModalProps> = ({
   isOpen,
   onClose,
   onSuccess,
-  editRecord
+  editRecord,
+  currentUser
 }) => {
   const catalogParts = getSpareParts();
 
@@ -159,7 +161,7 @@ export const RepairFormModal: React.FC<RepairFormModalProps> = ({
           customerAddress: customerAddress.trim(),
           machineDetails: machineDetails.trim(),
           issueDescription: issueDescription.trim(),
-          technicianName: technicianName.trim() || 'Hatimi Admin',
+          technicianName: technicianName.trim() || currentUser?.name || 'Hatimi Admin',
           repairCost: numRepairCost,
           labourCharges: numLabourCharges,
           spareParts,
@@ -174,13 +176,16 @@ export const RepairFormModal: React.FC<RepairFormModalProps> = ({
           customerAddress: customerAddress.trim(),
           machineDetails: machineDetails.trim(),
           issueDescription: issueDescription.trim(),
-          technicianName: technicianName.trim() || 'Hatimi Admin',
+          technicianName: technicianName.trim() || currentUser?.name || 'Hatimi Admin',
           repairCost: numRepairCost,
           labourCharges: numLabourCharges,
           spareParts,
           discount: numDiscount,
           amountPaid: numPaid,
-          paymentMethod
+          paymentMethod,
+          createdBy: currentUser?.id,
+          createdByEmail: currentUser?.email,
+          createdByName: currentUser?.name
         });
       }
 
